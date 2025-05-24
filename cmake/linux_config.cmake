@@ -31,6 +31,8 @@ set(OB_CURRENT_OS "linux_x86_64")
 
 execute_process(COMMAND uname -m OUTPUT_VARIABLE MACHINES)
 execute_process(COMMAND getconf LONG_BIT OUTPUT_VARIABLE MACHINES_BIT)
+
+message(STATUS "MACHINE: ${MACHINE}")
 if((${MACHINES} MATCHES "x86_64") AND (${MACHINES_BIT} MATCHES "64"))
     set(OB_CURRENT_OS "linux_x86_64")
 elseif(${MACHINES} MATCHES "arm")
@@ -73,11 +75,12 @@ if(OB_BUILD_LINUX_ARM32)
     endif()
 endif()
 
-if(OB_BUILD_LINUX_ARM64 OR OB_BUILD_LINUX_ARM32)
+if(OB_BUILD_LINUX_ARM64 OR OB_BUILD_LINUX_ARM32 OR TOOLCHAIN_ARM64_A53)
     message("linux set neon")
     add_definitions(-D__NEON__)
 else()
     message("linux set sse3")
+    # x86平台使用SSE3指令集
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse3")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
 endif()
