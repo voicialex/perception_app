@@ -1,3 +1,6 @@
+# Setup toolchain
+sudo ./build-env-on-ubuntu-bionic/install.sh
+
 
 # How to build
 
