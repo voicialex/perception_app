@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.10)
 project(demo)
 
 # 设置 C++ 标准
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)  # 升级到C++17以支持新特性
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 查找必要的包
@@ -16,6 +16,7 @@ find_package(OpenCV REQUIRED)
 set(SOURCES
     main.cpp
     ImageReceiver.cpp
+    DeviceManager.cpp
     MetadataHelper.cpp
     DumpHelper.cpp
 )
@@ -23,9 +24,11 @@ set(SOURCES
 # 添加头文件
 set(HEADERS
     ImageReceiver.hpp
+    DeviceManager.hpp
     MetadataHelper.hpp
     DumpHelper.hpp
     ConfigHelper.hpp
+    Logger.hpp
 )
 
 # 创建可执行文件
@@ -39,6 +42,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 # 链接库
 target_link_libraries(${PROJECT_NAME} PRIVATE ob::OrbbecSDK ob::examples::utils)
+
+# 设置编译选项
+target_compile_options(${PROJECT_NAME} PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic>
+    $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4>
+)
 
 # 设置输出目录
 set_target_properties(${PROJECT_NAME} PROPERTIES
