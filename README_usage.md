@@ -6,7 +6,8 @@ sudo ./build-env-on-ubuntu-bionic/install.sh
 
 mkdir build
 cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-toolchain.cmake -DCMAKE_VERBOSE_MAKEFILE=ON
+cmake .. -DCMAKE_TOOLCHAIN_FILE=~/Workspace/project_camera/OrbbecSDK_v2/cmake/aarch64-11.3-toolchain.cmake -DCMAKE_INSTALL_PREFIX=/home/seb/Workspace/project_camera/OrbbecSDK_v2/3rdparty/opencv
+//  -DCMAKE_VERBOSE_MAKEFILE=ON
 
 make -j8
 

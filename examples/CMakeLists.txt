@@ -5,7 +5,8 @@ cmake_minimum_required(VERSION 3.5)
 
 file(GLOB subdirectories RELATIVE ${CMAKE_CURRENT_LIST_DIR} "*")
 
-set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
+# set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
+set(OpenCV_DIR "/home/seb/Workspace/project_camera/OrbbecSDK_v2/3rdparty/opencv/lib/cmake/opencv4")
 # dependecies
 find_package(OpenCV QUIET)
 if(NOT ${OpenCV_FOUND})

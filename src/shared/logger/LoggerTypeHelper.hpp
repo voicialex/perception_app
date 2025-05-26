@@ -5,16 +5,18 @@
 #include "utils/PublicTypeHelper.hpp"
 
 #define OB_LOG_FORMATTER(type)                                                                                       \
-    template <> struct fmt::formatter<type> {                                                                         \
-        constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {                                    \
-            return ctx.end();                                                                                         \
-        }                                                                                                             \
+    namespace fmt {                                                                                                  \
+    template <> struct formatter<type> {                                                                            \
+        constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {                                 \
+            return ctx.end();                                                                                        \
+        }                                                                                                            \
         template <typename FormatContext> auto format(const type &input, FormatContext &ctx) -> decltype(ctx.out()) { \
-            std::ostringstream oss;                                                                                   \
-            oss << input;                                                                                             \
-            return format_to(ctx.out(), "{}", oss.str());                                                             \
-        }                                                                                                             \
-    };
+            std::ostringstream oss;                                                                                  \
+            oss << input;                                                                                            \
+            return format_to(ctx.out(), "{}", oss.str());                                                           \
+        }                                                                                                            \
+    };                                                                                                               \
+    }
 
 OB_LOG_FORMATTER(OBFormat)
 OB_LOG_FORMATTER(OBFrameType)

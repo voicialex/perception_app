@@ -12,8 +12,8 @@ set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 set(TOOLCHAIN_ARM64_A53 ON)
 
-# 设置工具链路径
-set(TOOLCHAIN_PATH /opt/FriendlyARM/toolchain/6.4-aarch64)
+# 设置工具链路径 - 使用11.3版本
+set(TOOLCHAIN_PATH /opt/FriendlyARM/toolchain/11.3-aarch64)
 
 # 设置编译器
 set(CMAKE_C_COMPILER ${TOOLCHAIN_PATH}/bin/aarch64-linux-gnu-gcc)
@@ -45,4 +45,4 @@ set(Threads_FOUND TRUE)
 
 # 强制使用交叉编译
 set(CMAKE_CROSSCOMPILING TRUE)
-set(CMAKE_CROSSCOMPILING_EMULATOR "")
+set(CMAKE_CROSSCOMPILING_EMULATOR "") 
