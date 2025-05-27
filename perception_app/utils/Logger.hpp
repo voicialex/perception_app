@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <sstream>
 #include <mutex>
+#include <thread>
 
 /**
  * @brief 日志管理器 - 单例模式
@@ -82,10 +83,15 @@ private:
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
             now.time_since_epoch()) % 1000;
 
+        auto threadId = std::this_thread::get_id();
+        std::stringstream threadIdStr;
+        threadIdStr << threadId;
+
         std::ostringstream oss;
         oss << "[" << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
         oss << "." << std::setfill('0') << std::setw(3) << ms.count() << "]";
-        oss << "[" << levelStr << "] ";
+        oss << "[" << levelStr << "]";
+        oss << "[线程:" << threadIdStr.str() << "] ";
         
         (oss << ... << args);
         oss << std::endl;
@@ -100,7 +106,7 @@ private:
         }
     }
 
-    Level level_ = Level::INFO;
+    Level level_ = Level::DEBUG;
     std::ofstream logFile_;
     std::mutex mutex_;
 };

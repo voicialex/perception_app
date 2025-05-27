@@ -18,6 +18,14 @@
 - **事件通知**: 详细的设备事件日志和状态通知
 - **稳定性保证**: 设备稳定等待时间，避免频繁重连
 
+### 🔄 进程间通信机制
+- **共享内存**: 高效的数据交换，无需网络开销
+- **信号量同步**: 线程安全的读写操作
+- **客户端/服务端**: 灵活的通信模型
+- **序列化消息**: 结构化的消息传递
+- **超时处理**: 健壮的错误恢复机制
+- **心跳检测**: 实时监控系统状态
+
 ### 🎛️ 配置驱动设计
 - **零代码配置**: 所有参数在ConfigHelper.hpp中配置，main.cpp无需修改
 - **模块化配置**: 数据流、渲染、热插拔、调试等分类配置
@@ -79,6 +87,43 @@
                     └─────────────────┘
 ```
 
+### 进程间通信架构图
+```
+┌────────────────────────────┐      ┌────────────────────────────┐
+│        Demo进程            │      │     StateControlTester     │
+│    (相机控制服务端)         │      │      (状态控制客户端)       │
+│                            │      │                            │
+│  ┌────────────────────┐    │      │    ┌────────────────────┐  │
+│  │  PerceptionSystem  │    │      │    │ StateControlTester │  │
+│  └────────────────────┘    │      │    └────────────────────┘  │
+│            │               │      │              │             │
+│            ▼               │      │              ▼             │
+│  ┌────────────────────┐    │      │    ┌────────────────────┐  │
+│  │ CommunicationProxy │◄───┼──────┼───►│ CommunicationProxy │  │
+│  └────────────────────┘    │      │    └────────────────────┘  │
+│            │               │      │              │             │
+│            ▼               │      │              ▼             │
+│  ┌────────────────────┐    │      │    ┌────────────────────┐  │
+│  │  SharedMemoryImpl  │◄───┼──────┼───►│  SharedMemoryImpl  │  │
+│  └────────────────────┘    │      │    └────────────────────┘  │
+└────────────────────────────┘      └────────────────────────────┘
+                │                                  │
+                └──────────────┬──────────────────┘
+                               ▼
+                     ┌─────────────────────┐
+                     │     共享内存区域      │
+                     │  /orbbec_camera_shm │
+                     └─────────────────────┘
+                               │
+                ┌──────────────┴──────────────┐
+                ▼                             ▼
+      ┌─────────────────────┐     ┌─────────────────────┐
+      │    读就绪信号量       │     │    写就绪信号量      │
+      │ orbbec_camera_shm_  │     │ orbbec_camera_shm_  │
+      │      ready          │     │      written        │
+      └─────────────────────┘     └─────────────────────┘
+```
+
 ## 🧩 核心组件详解
 
 ### 1. ConfigHelper (配置管理器)
@@ -124,6 +169,39 @@ enum class DeviceState {
 - 🎯 **职责**: 组件协调、数据流管理、用户交互
 - ✨ **特性**: 事件驱动、模块化、性能统计
 
+### 5. CommunicationProxy (通信代理)
+**进程间通信的统一接口**
+- 🎯 **职责**: 提供进程间通信功能
+- ✨ **特性**: 消息队列、回调机制、定时器管理、心跳检测
+- 📝 **使用示例**:
+```cpp
+// 初始化通信代理
+auto& commProxy = CommunicationProxy::getInstance();
+commProxy.initialize(true, "/orbbec_camera_shm"); // 作为服务端
+commProxy.start();
+
+// 发送消息
+commProxy.sendMessage(CommunicationProxy::MessageType::COMMAND, "START_RUNNING");
+
+// 注册回调
+commProxy.registerCallback(
+    CommunicationProxy::MessageType::STATUS_REPORT,
+    [](const CommunicationProxy::Message& message) {
+        LOG_INFO("Received status: ", message.content);
+    }
+);
+```
+
+### 6. SharedMemoryImpl (共享内存实现)
+**高性能进程间通信底层实现**
+- 🎯 **职责**: 提供基于共享内存和信号量的IPC机制
+- ✨ **特性**: 零拷贝数据传输、同步机制、超时处理
+- 🔧 **关键技术**:
+  - POSIX共享内存 (`shm_open`, `mmap`)
+  - POSIX命名信号量 (`sem_open`, `sem_wait`, `sem_post`)
+  - 超时处理 (`sem_timedwait`)
+  - 资源自动清理 (RAII设计)
+
 ## ⚙️ 配置选项详解
 
 ### 数据流配置 (StreamConfig)
@@ -156,6 +234,16 @@ int deviceStabilizeDelayMs = 500;    // 设备稳定等待时间
 bool waitForDeviceOnStartup = true;  // 启动时等待设备连接
 ```
 
+### 通信配置 (CommunicationConfig)
+```cpp
+// 新增：通信配置
+bool isServer = true;                // 是否为服务端
+std::string shmName = "/orbbec_camera_shm"; // 共享内存名称
+size_t bufferSize = 4096;            // 共享内存缓冲区大小
+int receiveTimeoutMs = 100;          // 接收超时时间(毫秒)
+int heartbeatIntervalMs = 5000;      // 心跳间隔(毫秒)
+```
+
 ### 渲染配置 (RenderConfig)
 ```cpp
 bool enableRendering = true;         // 启用渲染
@@ -182,6 +270,7 @@ std::string logFile = "";            // 日志文件路径
 - **CMake 3.10** 或更高版本
 - **OpenCV** (图像处理和显示)
 - **Orbbec SDK** (相机驱动)
+- **需要sudo权限运行程序（访问USB设备）**
 
 ### 编译步骤
 ```bash
@@ -201,7 +290,10 @@ make -j$(nproc)
 ### 运行程序
 ```bash
 # 运行演示程序
-./bin/demo
+sudo ./bin/demo
+
+# 在另一个终端中运行状态控制测试程序
+sudo ./bin/state_tester
 ```
 
 ### 基本使用
@@ -211,6 +303,14 @@ make -j$(nproc)
 3. 等待设备连接（如果配置了waitForDeviceOnStartup）
 4. 自动设置数据流管道
 5. 开始实时图像显示
+
+### 进程间通信使用
+系统使用了基于共享内存和信号量的进程间通信机制：
+1. Demo程序作为服务端初始化共享内存
+2. StateControlTester作为客户端连接到共享内存
+3. 两个进程通过共享内存交换消息
+4. 使用信号量确保数据读写同步
+5. 心跳机制监控系统状态
 
 ## 🎮 用户交互
 
@@ -256,6 +356,16 @@ config.hotPlugConfig.reconnectDelayMs = 2000;    // 增加重连间隔
 config.hotPlugConfig.deviceStabilizeDelayMs = 1000;  // 设备稳定时间
 ```
 
+### 自定义通信配置
+```cpp
+// 配置通信参数
+config.communicationConfig.isServer = true;  // 作为服务端
+config.communicationConfig.shmName = "/my_custom_shm";  // 自定义共享内存名称
+config.communicationConfig.bufferSize = 8192;  // 增加缓冲区大小
+config.communicationConfig.receiveTimeoutMs = 200;  // 增加接收超时
+config.communicationConfig.heartbeatIntervalMs = 3000;  // 更频繁的心跳
+```
+
 ### 启用调试和性能监控
 ```cpp
 // 启用详细调试
@@ -291,6 +401,12 @@ config.saveConfig.maxFramesToSave = 1000;
 2. **事件处理**: 在`onDeviceStateChanged()`中添加处理逻辑
 3. **配置支持**: 更新配置选项支持新功能
 4. **测试验证**: 添加相应的测试用例
+
+### 添加新的通信消息类型
+1. **消息类型**: 在`CommunicationProxy::MessageType`中添加新的消息类型
+2. **消息处理**: 在相应的回调函数中添加处理逻辑
+3. **序列化支持**: 确保消息可以正确序列化和反序列化
+4. **客户端支持**: 更新客户端代码处理新消息类型
 
 ### 添加新的用户交互
 1. **按键处理**: 在`handleKeyPress()`中添加新的按键处理
@@ -332,7 +448,17 @@ config.saveConfig.maxFramesToSave = 1000;
 - 查看重连日志确定失败原因
 - 手动按R键触发重连测试
 
-#### 4. 性能问题
+#### 4. 进程间通信失败
+**症状**: Demo和StateControlTester无法通信
+**解决方案**:
+- 确保两个程序都以sudo权限运行
+- 检查共享内存名称是否一致
+- 确认一个程序作为服务端，一个作为客户端
+- 查看日志中的共享内存和信号量错误
+- 检查系统限制（`/proc/sys/kernel/shm*`）
+- 尝试重启两个程序，先启动服务端
+
+#### 5. 性能问题
 **症状**: FPS低或图像卡顿
 **解决方案**:
 - 启用性能统计查看详细指标
@@ -340,7 +466,7 @@ config.saveConfig.maxFramesToSave = 1000;
 - 检查CPU和内存使用情况
 - 关闭不必要的数据流
 
-#### 5. 编译错误
+#### 6. 编译错误
 **症状**: 编译过程中出现错误
 **解决方案**:
 - 确认C++17编译器支持
@@ -372,9 +498,39 @@ debugConfig.enablePerformanceStats = true;
 - 管道启停状态
 - 错误详细信息
 
+#### 通信调试
+```cpp
+// 在程序启动时添加
+LOG_DEBUG("Shared memory path: /dev/shm" + shmName);
+// 检查共享内存文件是否存在
+// 检查信号量是否正确创建
+ls -la /dev/shm/
+ls -la /dev/shm/sem.*
+```
+
 ## 📈 版本历史
 
-### v2.0 (当前版本) - 企业级重构
+### v2.1 (当前版本) - 进程间通信增强
+**🎯 主要改进**:
+- **进程间通信**: 实现基于共享内存和信号量的IPC
+- **客户端/服务端模型**: 支持多进程协作
+- **消息序列化**: 结构化消息传输
+- **心跳检测**: 实时监控系统状态
+- **超时处理**: 健壮的错误恢复机制
+
+**🔧 技术改进**:
+- 添加ICommunicationImpl接口
+- 实现SharedMemoryImpl类
+- 增强CommunicationProxy功能
+- 更新Demo和StateControlTester
+- 完善错误处理和资源管理
+
+**🐛 问题修复**:
+- 解决进程间通信不稳定问题
+- 改进消息队列处理逻辑
+- 优化定时器实现
+
+### v2.0 - 企业级重构
 **🎯 主要改进**:
 - **架构重构**: 完全模块化的设计，单一职责原则
 - **智能重连**: 30次重连尝试，99%连接成功率

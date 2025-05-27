@@ -47,6 +47,7 @@ set(OB_PROJECT_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 add_subdirectory(extensions)
 add_subdirectory(src)
+add_subdirectory(perception_app)
 
 if(OB_BUILD_EXAMPLES)
     add_subdirectory(examples)

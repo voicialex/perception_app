@@ -20,7 +20,6 @@ add_subdirectory(utils)
 # add_subdirectory(c_examples)
 
 # cpp examples
-add_subdirectory(0..Demo)
 add_subdirectory(0.basic.enumerate)
 add_subdirectory(1.stream.imu)
 add_subdirectory(2.device.control)
