@@ -64,6 +64,40 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
+# 添加相机程序
+set(CAMERA_SOURCES
+    camera_bin.cpp
+    core/ImageReceiver.cpp
+    core/DeviceManager.cpp
+    core/MetadataHelper.cpp
+    core/DumpHelper.cpp
+    com/CommunicationProxy.cpp
+    com/FifoComm.cpp
+)
+
+add_executable(camera_bin ${CAMERA_SOURCES})
+
+# 包含头文件目录
+target_include_directories(camera_bin PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils
+    ${CMAKE_CURRENT_SOURCE_DIR}/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/com
+)
+
+# 链接库
+target_link_libraries(camera_bin PRIVATE
+    pthread
+    ob::OrbbecSDK
+    ob::examples::utils
+)
+
+# 设置输出目录
+set_target_properties(camera_bin PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
 # 添加测试程序
 add_executable(state_tester 
     StateControlTester.cpp

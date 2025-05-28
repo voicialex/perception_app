@@ -14,6 +14,7 @@
  * @brief 感知系统 - 整个相机系统的主控制类
  * 
  * 负责系统状态管理、组件协调和通信接口
+ * 采用单例模式设计
  */
 class PerceptionSystem {
 public:
@@ -29,26 +30,17 @@ public:
         UPGRADING,  // 升级状态
         SHUTDOWN    // 关闭状态
     };
-    
-    /**
-     * @brief 状态变化回调函数类型
-     */
-    using StateChangeCallback = std::function<void(SystemState, SystemState)>;
-    
+
     /**
      * @brief 状态处理函数类型
      */
     using StateHandler = std::function<void()>;
 
     /**
-     * @brief 构造函数
+     * @brief 获取单例实例
+     * @return 单例实例引用
      */
-    PerceptionSystem();
-    
-    /**
-     * @brief 析构函数
-     */
-    ~PerceptionSystem();
+    static PerceptionSystem& getInstance();
     
     /**
      * @brief 初始化感知系统
@@ -57,17 +49,12 @@ public:
     bool initialize();
     
     /**
-     * @brief 启动感知系统
-     */
-    void start();
-    
-    /**
      * @brief 停止感知系统
      */
     void stop();
     
     /**
-     * @brief 运行主循环
+     * @brief 运行主循环（包含启动逻辑）
      */
     void run();
     
@@ -91,13 +78,21 @@ public:
      */
     static std::string getStateName(SystemState state);
     
-    /**
-     * @brief 注册状态变化回调
-     * @param callback 回调函数
-     */
-    void registerStateChangeCallback(StateChangeCallback callback);
-
 private:
+    /**
+     * @brief 私有构造函数，实现单例模式
+     */
+    PerceptionSystem();
+    
+    /**
+     * @brief 私有析构函数
+     */
+    ~PerceptionSystem();
+    
+    // 禁止拷贝和赋值
+    PerceptionSystem(const PerceptionSystem&) = delete;
+    PerceptionSystem& operator=(const PerceptionSystem&) = delete;
+    
     /**
      * @brief 检查状态转换是否有效
      * @param oldState 旧状态
@@ -124,6 +119,8 @@ private:
      */
     void handleCommunicationMessage(const CommunicationProxy::Message& message);
     
+    void handleHeartBeatMessage(const CommunicationProxy::Message& message);
+
     /**
      * @brief 清理资源
      */
@@ -168,15 +165,13 @@ private:
      * @brief 处理连接状态变化
      * @param newState 新状态
      */
-    void handleConnectionStateChanged(
-        CommunicationProxy::ConnectionState newState);
+    void handleConnectionStateChanged(CommunicationProxy::ConnectionState newState);
     
     // 成员变量
     CommunicationProxy& commProxy_;             ///< 通信代理引用
     std::unique_ptr<ImageReceiver> imageReceiver_; ///< 图像接收器
     
     SystemState currentState_ = SystemState::UNKNOWN; ///< 当前系统状态
-    StateChangeCallback stateChangeCallback_;       ///< 状态变化回调
     
     std::atomic<bool> isInitialized_{false};  ///< 初始化标志
     std::atomic<bool> isRunning_{false};      ///< 运行标志

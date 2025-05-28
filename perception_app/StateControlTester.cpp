@@ -21,6 +21,12 @@ std::atomic<bool> g_exitRequested{false};
 void signalHandler(int signal) {
     LOG_INFO("收到信号 ", signal, ", 正在关闭...");
     g_exitRequested = true;
+    
+    // 给程序一些时间来优雅退出
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    
+    // 如果程序没有及时退出，则强制退出
+    LOG_WARN("强制退出程序");
     _exit(signal);
 }
 
@@ -50,14 +56,16 @@ public:
         // 设置通信回调
         setupCallbacks();
         
-        isInitialized_ = true;
+        state_ = ControllerState::INITIALIZED;
+        
         LOG_INFO("初始化成功");
+        
         return true;
     }
     
-    void start() {
-        if(!isInitialized_) {
-            LOG_ERROR("未初始化，无法启动");
+    void run() {
+        if(state_ == ControllerState::UNINITIALIZED) {
+            LOG_ERROR("未初始化，无法运行");
             return;
         }
         
@@ -66,22 +74,39 @@ public:
         // 启动通信代理
         commProxy_.start();
         
-        isRunning_ = true;
+        state_ = ControllerState::RUNNING;
+        
+        // 立即发送一次心跳消息，激活通信连接
+        sendHeartbeat();
         
         // 启动心跳线程
         startHeartbeatThread();
         
-        LOG_INFO("已启动");
+        LOG_INFO("已启动，进入主循环");
+        
+        // 显示操作菜单
+        printMenu();
+        
+        // 主循环
+        while(state_ == ControllerState::RUNNING && !g_exitRequested) {
+            // 处理用户输入
+            processUserInput();
+            
+            // 短暂休眠，减少CPU使用
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+        
+        LOG_INFO("主循环已退出");
     }
     
     void stop() {
-        if(!isRunning_) {
+        if(state_ != ControllerState::RUNNING) {
             return;
         }
         
         LOG_INFO("正在停止...");
         
-        isRunning_ = false;
+        state_ = ControllerState::STOPPING;
         
         // 等待心跳线程结束
         if (heartbeatThread_.joinable()) {
@@ -92,26 +117,6 @@ public:
         commProxy_.stop();
         
         LOG_INFO("已停止");
-    }
-    
-    void run() {
-        if(!isInitialized_) {
-            LOG_ERROR("未初始化，无法运行");
-            return;
-        }
-        
-        printMenu();
-        
-        // 主循环
-        while(isRunning_ && !g_exitRequested) {
-            // 处理用户输入
-            processUserInput();
-            
-            // 短暂休眠，减少CPU使用
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-        
-        LOG_INFO("主循环已退出");
     }
     
 private:
@@ -163,15 +168,14 @@ private:
                     sendCommand("TAKE_SNAPSHOT");
                     break;
                     
-                case '0':
-                case 'q':
-                case 'Q':
-                    LOG_INFO("退出...");
-                    isRunning_ = false;
+                case '0': case 'q': case 'Q':
+                    LOG_INFO("退出程序...");
+                    state_ = ControllerState::STOPPING;
                     break;
                     
                 default:
                     LOG_INFO("未知命令: ", input);
+                    printMenu(); // 显示帮助信息
                     break;
             }
         }
@@ -279,14 +283,23 @@ private:
         heartbeatThread_ = std::thread([this]() {
             LOG_INFO("心跳线程已启动");
             
-            while (isRunning_ && !g_exitRequested) {
-                sendHeartbeat();
+            // 先等待短暂时间让初始化完成
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            
+            // 发送第一次心跳
+            sendHeartbeat();
+            
+            while (state_ == ControllerState::RUNNING && !g_exitRequested) {
+                // 检查连接状态
                 checkConnection();
                 
-                // 等待5秒或直到程序退出
-                for (int i = 0; i < 50 && isRunning_ && !g_exitRequested; i++) {
+                // 等待心跳间隔时间（5秒）或直到程序退出
+                for (int i = 0; i < 50 && state_ == ControllerState::RUNNING && !g_exitRequested; i++) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
+                
+                // 发送定期心跳
+                sendHeartbeat();
             }
             
             LOG_INFO("心跳线程已停止");
@@ -294,15 +307,15 @@ private:
     }
     
     void sendHeartbeat() {
-        // 添加当前时间戳，避免缓存问题
-        // std::string timestamp = std::to_string(
-        //     std::chrono::duration_cast<std::chrono::seconds>(
-        //         std::chrono::steady_clock::now().time_since_epoch()).count());
-        static int count = 0;
-        std::string timestamp = std::to_string(count++);
+        // 使用当前毫秒时间作为时间戳，确保每次都不同
+        auto timestamp = std::to_string(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count());
                 
+        // 发送心跳消息
         if (!commProxy_.sendMessage(CommunicationProxy::MessageType::HEARTBEAT, "PING:" + timestamp)) {
             isConnected_ = false;
+            LOG_WARN("心跳消息发送失败，连接可能已断开");
         }
     }
     
@@ -337,9 +350,19 @@ private:
                 break;
             case CommunicationProxy::ConnectionState::CONNECTED:
                 stateStr = "已连接";
-                // 立即发送心跳验证连接
-                sendHeartbeat();
-                sendCommand("GET_STATUS");
+                isConnected_ = true;
+                
+                // 立即发送心跳和状态查询激活连接
+                LOG_INFO("连接建立，立即发送心跳和状态查询...");
+                
+                // 使用独立线程发送，避免回调中嵌套发送可能导致的问题
+                std::thread([this]() {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    sendHeartbeat();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                    sendCommand("GET_STATUS");
+                }).detach();
+                
                 break;
             default:
                 stateStr = "未知状态";
@@ -349,9 +372,16 @@ private:
         LOG_INFO("连接状态变化: ", stateStr);
     }
     
+    // 内部状态枚举
+    enum class ControllerState {
+        UNINITIALIZED,   // 未初始化
+        INITIALIZED,     // 已初始化但未运行
+        RUNNING,         // 运行中
+        STOPPING         // 正在停止
+    };
+
     CommunicationProxy& commProxy_;
-    std::atomic<bool> isInitialized_{false};
-    std::atomic<bool> isRunning_{false};
+    std::atomic<ControllerState> state_{ControllerState::UNINITIALIZED};
     
     // 连接状态
     std::atomic<bool> isConnected_{false};
@@ -386,10 +416,7 @@ int main() {
             return -1;
         }
         
-        // 启动
-        controller.start();
-        
-        // 运行主循环
+        // 运行主循环（包含启动逻辑）
         controller.run();
         
         LOG_INFO("程序正常退出");

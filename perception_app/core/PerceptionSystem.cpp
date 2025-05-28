@@ -3,6 +3,13 @@
 #include "ConfigHelper.hpp"
 #include <chrono>
 #include <thread>
+#include <functional>
+
+// 单例实现
+PerceptionSystem& PerceptionSystem::getInstance() {
+    static PerceptionSystem instance;
+    return instance;
+}
 
 PerceptionSystem::PerceptionSystem()
     : commProxy_(CommunicationProxy::getInstance()) {
@@ -31,14 +38,7 @@ bool PerceptionSystem::initialize() {
     
     // 设置通信回调
     setupCommunicationCallbacks();
-    
-    // 注册连接状态变化回调
-    commProxy_.registerConnectionCallback(
-        [this](CommunicationProxy::ConnectionState newState) {
-            handleConnectionStateChanged(newState);
-        }
-    );
-    
+   
     // 创建图像接收器
     imageReceiver_ = std::make_unique<ImageReceiver>();
     
@@ -78,12 +78,6 @@ void PerceptionSystem::handleRunningState() {
         // 启动数据流管道
         imageReceiver_->startPipelines();
     }
-
-    // 发送状态报告
-    commProxy_.sendMessage(
-        CommunicationProxy::MessageType::STATUS_REPORT,
-        "SYSTEM_RUNNING"
-    );
 }
 
 void PerceptionSystem::handlePendingState() {
@@ -95,12 +89,6 @@ void PerceptionSystem::handlePendingState() {
         // 显示无信号画面
         imageReceiver_->showNoSignalFrame();
     }
-
-    // 发送状态报告
-    commProxy_.sendMessage(
-        CommunicationProxy::MessageType::STATUS_REPORT,
-        "SYSTEM_PENDING"
-    );
 }
 
 void PerceptionSystem::handleErrorState() {
@@ -112,12 +100,6 @@ void PerceptionSystem::handleErrorState() {
         // 显示无信号画面
         imageReceiver_->showNoSignalFrame();
     }
-    
-    // 发送错误报告
-    commProxy_.sendMessage(
-        CommunicationProxy::MessageType::ERROR,
-        "SYSTEM_ERROR"
-    );
 }
 
 void PerceptionSystem::handleCalibratingState() {
@@ -129,12 +111,6 @@ void PerceptionSystem::handleCalibratingState() {
     }
     
     // 这里可以添加校准相关的代码
-
-    // 发送状态报告
-    commProxy_.sendMessage(
-        CommunicationProxy::MessageType::STATUS_REPORT,
-        "SYSTEM_CALIBRATING"
-    );
 }
 
 void PerceptionSystem::handleUpgradingState() {
@@ -146,12 +122,6 @@ void PerceptionSystem::handleUpgradingState() {
     }
     
     // 这里可以添加升级相关的代码
-
-    // 发送状态报告
-    commProxy_.sendMessage(
-        CommunicationProxy::MessageType::STATUS_REPORT,
-        "SYSTEM_UPGRADING"
-    );
 }
 
 void PerceptionSystem::handleShutdownState() {
@@ -162,19 +132,13 @@ void PerceptionSystem::handleShutdownState() {
         imageReceiver_->stopCapture();
     }
 
-    // 发送状态报告
-    commProxy_.sendMessage(
-        CommunicationProxy::MessageType::STATUS_REPORT,
-        "SYSTEM_SHUTDOWN"
-    );
-
     // 停止整个系统
     stop();
 }
 
-void PerceptionSystem::start() {
+void PerceptionSystem::run() {
     if(!isInitialized_) {
-        LOG_ERROR("Cannot start PerceptionSystem: not initialized");
+        LOG_ERROR("Cannot run PerceptionSystem: not initialized");
         return;
     }
 
@@ -183,15 +147,44 @@ void PerceptionSystem::start() {
         return;
     }
 
-    LOG_INFO("Starting PerceptionSystem...");
+    LOG_INFO("Starting and running PerceptionSystem...");
     
     // 启动通信代理
     commProxy_.start();
     
+    // 设置运行标志
     isRunning_ = true;
     shouldExit_ = false;
     
-    LOG_INFO("PerceptionSystem started with initial state: ", getStateName(currentState_));
+    // 设置初始系统状态为待命并触发一次状态处理
+    setState(SystemState::PENDING);
+    
+    // 启动图像接收器的运行循环（非阻塞）
+    if(imageReceiver_) {
+        imageReceiver_->run();
+    }
+    
+    LOG_INFO("PerceptionSystem running with initial state: ", getStateName(currentState_));
+    
+    // 主循环 - 只用于保持程序运行，不再处理状态
+    while(!shouldExit_) {
+        try {
+            // 短暂休眠，减少CPU使用
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            
+            // 检查图像接收器窗口是否正常
+            if(imageReceiver_ && currentState_ == SystemState::PENDING) {
+                // 在待命状态下，确保始终显示无信号画面
+                imageReceiver_->showNoSignalFrame();
+            }
+        }
+        catch(const std::exception& e) {
+            LOG_ERROR("Exception in main loop: ", e.what());
+            setState(SystemState::ERROR);
+        }
+    }
+    
+    LOG_INFO("PerceptionSystem main loop exited");
 }
 
 void PerceptionSystem::stop() {
@@ -232,18 +225,25 @@ bool PerceptionSystem::setState(SystemState newState) {
     // 处理状态转换
     handleStateTransition(oldState, newState);
     
-    // 调用状态变化回调
-    std::lock_guard<std::mutex> lock(callbackMutex_);
-    if(stateChangeCallback_) {
-        stateChangeCallback_(oldState, newState);
+    // 发送统一的状态报告
+    std::string statusMessage;
+    if(newState == SystemState::ERROR) {
+        statusMessage = "SYSTEM_ERROR";
+        commProxy_.sendMessage(
+            CommunicationProxy::MessageType::ERROR,
+            statusMessage
+        );
+    } else {
+        statusMessage = "SYSTEM_" + getStateName(newState);
+        commProxy_.sendMessage(
+            CommunicationProxy::MessageType::STATUS_REPORT,
+            statusMessage
+        );
     }
     
+    LOG_INFO("发送状态报告: ", statusMessage);
+    
     return true;
-}
-
-void PerceptionSystem::registerStateChangeCallback(StateChangeCallback callback) {
-    std::lock_guard<std::mutex> lock(callbackMutex_);
-    stateChangeCallback_ = callback;
 }
 
 std::string PerceptionSystem::getStateName(SystemState state) {
@@ -298,42 +298,21 @@ void PerceptionSystem::handleStateTransition(SystemState oldState, SystemState n
 }
 
 void PerceptionSystem::setupCommunicationCallbacks() {
+    // 注册连接状态变化回调 - 使用std::bind直接绑定成员函数
+    commProxy_.registerConnectionCallback(
+        std::bind(&PerceptionSystem::handleConnectionStateChanged, this, std::placeholders::_1)
+    );
+
     // 注册命令消息回调
     commProxy_.registerCallback(
         CommunicationProxy::MessageType::COMMAND,
-        [this](const CommunicationProxy::Message& message) {
-            handleCommunicationMessage(message);
-        }
+        std::bind(&PerceptionSystem::handleCommunicationMessage, this, std::placeholders::_1)
     );
     
     // 注册心跳消息回调 - 收到心跳请求后立即回复
     commProxy_.registerCallback(
         CommunicationProxy::MessageType::HEARTBEAT,
-        [this](const CommunicationProxy::Message& message) {
-            // 收到心跳消息，立即回复心跳响应
-            LOG_DEBUG("收到心跳请求: ", message.content);
-            
-            // 解析心跳请求，检查是否包含PING前缀
-            std::string requestType = message.content;
-            std::string requestData;
-            
-            // 分离前缀和数据部分
-            size_t colonPos = message.content.find(':');
-            if (colonPos != std::string::npos) {
-                requestType = message.content.substr(0, colonPos);
-                requestData = message.content.substr(colonPos + 1);
-            }
-            
-            // 只响应PING开头的心跳请求
-            if (requestType == "PING") {
-                // 回复心跳请求，包含当前状态信息和原始请求数据
-                LOG_DEBUG("回复心跳请求: PING:", requestData, " -> PONG:", requestData, ":", getStateName(currentState_));
-                commProxy_.sendMessage(
-                    CommunicationProxy::MessageType::HEARTBEAT,
-                    "PONG:" + requestData + ":" + getStateName(currentState_)
-                );
-            }
-        }
+        std::bind(&PerceptionSystem::handleHeartBeatMessage, this, std::placeholders::_1)
     );
 }
 
@@ -382,60 +361,35 @@ void PerceptionSystem::handleCommunicationMessage(const CommunicationProxy::Mess
     }
 }
 
-void PerceptionSystem::run() {
-    if(!isInitialized_) {
-        LOG_ERROR("Cannot run PerceptionSystem: not initialized");
-        return;
-    }
-
-    LOG_INFO("Starting PerceptionSystem main loop...");
+void PerceptionSystem::handleHeartBeatMessage(const CommunicationProxy::Message& message)
+{
+    // 收到心跳消息，立即回复心跳响应
+    LOG_DEBUG("收到心跳请求: ", message.content);
     
-    // 设置初始系统状态为待命并触发一次状态处理
-    setState(SystemState::PENDING);
+    // 解析心跳请求，检查是否包含PING前缀
+    std::string requestType = message.content;
+    std::string requestData;
     
-    // 启动图像接收器的运行循环（非阻塞）
-    if(imageReceiver_) {
-        imageReceiver_->run();
-    }
-    
-    // 主循环 - 只用于保持程序运行，不再处理状态
-    while(!shouldExit_) {
-        try {
-            // 短暂休眠，减少CPU使用
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            
-            // 检查图像接收器窗口是否正常
-            if(imageReceiver_ && currentState_ == SystemState::PENDING) {
-                // 在待命状态下，确保始终显示无信号画面
-                imageReceiver_->showNoSignalFrame();
-            }
-        }
-        catch(const std::exception& e) {
-            LOG_ERROR("Exception in main loop: ", e.what());
-            setState(SystemState::ERROR);
-        }
+    // 分离前缀和数据部分
+    size_t colonPos = message.content.find(':');
+    if (colonPos != std::string::npos) {
+        requestType = message.content.substr(0, colonPos);
+        requestData = message.content.substr(colonPos + 1);
     }
     
-    LOG_INFO("PerceptionSystem main loop exited");
-}
-
-void PerceptionSystem::cleanup() {
-    LOG_DEBUG("Cleaning up PerceptionSystem resources...");
-    
-    // 停止所有活动
-    stop();
-    
-    // 清理图像接收器
-    if(imageReceiver_) {
-        imageReceiver_.reset();
+    // 只响应PING开头的心跳请求
+    if (requestType == "PING") {
+        // 回复心跳请求，包含当前状态信息和原始请求数据
+        LOG_DEBUG("回复心跳请求: PING:", requestData, " -> PONG:", requestData, ":", getStateName(currentState_));
+        commProxy_.sendMessage(
+            CommunicationProxy::MessageType::HEARTBEAT,
+            "PONG:" + requestData + ":" + getStateName(currentState_)
+        );
     }
-    
-    LOG_DEBUG("PerceptionSystem cleanup completed");
 }
 
 // 处理连接状态变化
-void PerceptionSystem::handleConnectionStateChanged(
-    CommunicationProxy::ConnectionState newState) {
+void PerceptionSystem::handleConnectionStateChanged(CommunicationProxy::ConnectionState newState) {
     
     // 将状态代码转换为更可读的字符串
     std::string stateStr;
@@ -459,4 +413,18 @@ void PerceptionSystem::handleConnectionStateChanged(
     if (newState == CommunicationProxy::ConnectionState::CONNECTED) {
         LOG_INFO("通信连接已建立，发送当前状态...");
     }
-} 
+}
+
+void PerceptionSystem::cleanup() {
+    LOG_DEBUG("Cleaning up PerceptionSystem resources...");
+    
+    // 停止所有活动
+    stop();
+    
+    // 清理图像接收器
+    if(imageReceiver_) {
+        imageReceiver_.reset();
+    }
+    
+    LOG_DEBUG("PerceptionSystem cleanup completed");
+}

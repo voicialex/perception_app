@@ -91,7 +91,7 @@ private:
         oss << "[" << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
         oss << "." << std::setfill('0') << std::setw(3) << ms.count() << "]";
         oss << "[" << levelStr << "]";
-        oss << "[线程:" << threadIdStr.str() << "] ";
+        oss << "[TID:" << threadIdStr.str() << "] ";
         
         (oss << ... << args);
         oss << std::endl;
@@ -106,7 +106,7 @@ private:
         }
     }
 
-    Level level_ = Level::DEBUG;
+    Level level_ = Level::INFO;
     std::ofstream logFile_;
     std::mutex mutex_;
 };

@@ -12,8 +12,7 @@
 #include "ConfigHelper.hpp"
 #include "Logger.hpp"
 
-// 全局变量用于信号处理
-std::unique_ptr<PerceptionSystem> g_perceptionSystem;
+// 全局变量只用于信号处理
 std::atomic<bool> g_exitRequested{false};
 
 /**
@@ -23,9 +22,8 @@ void signalHandler(int signal) {
     LOG_INFO("Caught signal: ", signal);
     g_exitRequested = true;
     
-    if(g_perceptionSystem) {
-        g_perceptionSystem->stop();
-    }
+    // 使用单例获取PerceptionSystem
+    PerceptionSystem::getInstance().stop();
     
     // 使用更优雅的退出方式
     static std::atomic<bool> forceExitInProgress{false};
@@ -80,45 +78,21 @@ int main() {
             return -1;
         }
         
-        // 创建感知系统
-        g_perceptionSystem = std::make_unique<PerceptionSystem>();
+        // 获取感知系统实例
+        auto& perceptionSystem = PerceptionSystem::getInstance();
         
         // 初始化
-        if(!g_perceptionSystem->initialize()) {
+        LOG_ERROR("perceptionSystem.initialize() 1");
+        if(!perceptionSystem.initialize()) {
             LOG_ERROR("Failed to initialize PerceptionSystem");
             return -1;
         }
+        LOG_ERROR("perceptionSystem.initialize() 2");
         
-        // 启动通信代理
-        commProxy.start();
+        // 运行主循环（现在包含了启动逻辑）
+        perceptionSystem.run();
         
-        // 启动感知系统
-        g_perceptionSystem->start();
-        
-        LOG_INFO("Application initialized successfully");
-        LOG_INFO("System States:");
-        LOG_INFO("  PENDING     - 待命状态");
-        LOG_INFO("  RUNNING     - 运行状态");
-        LOG_INFO("  ERROR       - 错误状态");
-        LOG_INFO("  CALIBRATING - 校准状态");
-        LOG_INFO("  UPGRADING   - 升级状态");
-        LOG_INFO("  SHUTDOWN    - 关闭状态");
-        LOG_INFO("Commands:");
-        LOG_INFO("  START_RUNNING     - 进入运行状态");
-        LOG_INFO("  START_PENDING     - 进入待命状态");
-        LOG_INFO("  GET_STATUS        - 获取当前状态");
-        LOG_INFO("  TAKE_SNAPSHOT     - 拍照");
-        LOG_INFO("Waiting for external state control commands...");
-        
-        // 默认启动为RUNNING状态，打开相机
-        LOG_INFO("Setting initial state to RUNNING...");
-        g_perceptionSystem->setState(PerceptionSystem::SystemState::RUNNING);
-        
-        // 运行主循环
-        g_perceptionSystem->run();
-        
-        // 清理全局变量
-        g_perceptionSystem.reset();
+        // 重置退出标志
         g_exitRequested = false;
         
         LOG_INFO("Application exiting normally");
@@ -126,12 +100,10 @@ int main() {
     }
     catch(const std::exception& e) {
         LOG_ERROR("Application error: ", e.what());
-        g_perceptionSystem.reset();
         return -1;
     }
     catch(...) {
         LOG_ERROR("Unknown error occurred");
-        g_perceptionSystem.reset();
         return -1;
     }
 }

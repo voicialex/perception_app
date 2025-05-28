@@ -63,7 +63,7 @@ bool ImageReceiver::initialize() {
         // 创建无信号画面
         createNoSignalFrame();
         
-        // 立即显示蓝色背景
+        // 立即显示背景
         showNoSignalFrame();
         
         // 启动设备管理器
@@ -171,6 +171,7 @@ void ImageReceiver::setupKeyboardCallbacks() {
 }
 
 void ImageReceiver::handleKeyPress(int key) {
+    // LOG_INFO("Controls: ESC-Exit, R-Reboot, P-Print devices, S-Stats");
     switch(key) {
         case 27: // ESC键退出
             LOG_INFO("ESC key pressed, exiting...");
@@ -389,9 +390,8 @@ void ImageReceiver::run() {
     
     try {
         LOG_INFO("Starting ImageReceiver main loop...");
-        LOG_INFO("Controls: ESC-Exit, R-Reboot, P-Print devices, S-Stats");
         
-        // 初始化时先显示蓝色无信号画面
+        // 初始化时先显示无信号画面
         showNoSignalFrame();
         
         // 主循环 - 优先检查shouldExit_
@@ -427,23 +427,23 @@ void ImageReceiver::renderFrames() {
         return;
     }
     
-            std::vector<std::shared_ptr<const ob::Frame>> framesForRender;
+    std::vector<std::shared_ptr<const ob::Frame>> framesForRender;
 
     // 收集主数据流帧
-            {
-                std::lock_guard<std::mutex> lock(frameMutex_);
-                for(auto &frame: frameMap_) {
-                    framesForRender.push_back(std::const_pointer_cast<const ob::Frame>(frame.second));
-                }
-            }
+    {
+        std::lock_guard<std::mutex> lock(frameMutex_);
+        for(auto &frame: frameMap_) {
+            framesForRender.push_back(std::const_pointer_cast<const ob::Frame>(frame.second));
+        }
+    }
 
     // 收集IMU数据流帧
-            if(ConfigHelper::getInstance().streamConfig.enableIMU) {
-                std::lock_guard<std::mutex> lock(imuFrameMutex_);
-                for(auto &frame: imuFrameMap_) {
-                    framesForRender.push_back(std::const_pointer_cast<const ob::Frame>(frame.second));
-                }
-            }
+    if(ConfigHelper::getInstance().streamConfig.enableIMU) {
+        std::lock_guard<std::mutex> lock(imuFrameMutex_);
+        for(auto &frame: imuFrameMap_) {
+            framesForRender.push_back(std::const_pointer_cast<const ob::Frame>(frame.second));
+        }
+    }
 
     // 渲染帧
     auto deviceState = deviceManager_->getDeviceState();
@@ -469,13 +469,12 @@ void ImageReceiver::renderFrames() {
             }
         }
     } else {
-        // 设备未连接，显示无信号画面
-        showNoSignalFrame();
-        
         static int waitCount = 0;
         if(++waitCount % 100 == 0) {  // 每100次循环打印一次
+            // 设备未连接，显示无信号画面
+            showNoSignalFrame();
             LOG_DEBUG("Waiting for device connection... (state: ", static_cast<int>(deviceState), ")");
-    }
+        }
     }
 }
 
