@@ -1,0 +1,496 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineSystem.cmake:228 (message)"
+      - "CMakeLists.txt:6 (project)"
+    message: |
+      The target system is: Linux -  - aarch64
+      The host system is: Linux - 6.11.0-26-generic - x86_64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:6 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: /opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-gcc 
+      Build flags: --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot;--sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+      
+      The C compiler identification is GNU, found in:
+        /home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/3.28.3/CompilerIdC/a.out
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:6 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++ 
+      Build flags: --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot;--sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is GNU, found in:
+        /home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/3.28.3/CompilerIdCXX/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:6 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-Vqu4vv"
+      binary: "/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-Vqu4vv"
+    cmakeVariables:
+      CMAKE_C_FLAGS: " --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot"
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: " --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot"
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-Vqu4vv'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_af245/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_af245.dir/build.make CMakeFiles/cmTC_af245.dir/build
+        gmake[1]: Entering directory '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-Vqu4vv'
+        Building C object CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o
+        /opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-gcc   --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot    -v -o CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.28/Modules/CMakeCCompilerABI.c
+        Using built-in specs.
+        COLLECT_GCC=/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-gcc
+        Target: aarch64-cortexa53-linux-gnu
+        Configured with: /work/toolchain/build/aarch64-cortexa53-linux-gnu/build/src/gcc/configure --build=x86_64-build_pc-linux-gnu --host=x86_64-build_pc-linux-gnu --target=aarch64-cortexa53-linux-gnu --prefix=/opt/FriendlyARM/toolchain/6.4-aarch64 --with-sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-languages=c,c++ --enable-fix-cortex-a53-835769 --enable-fix-cortex-a53-843419 --with-cpu=cortex-a53 --with-pkgversion=ctng-1.23.0-150g-FA --with-bugurl=http://www.friendlyarm.com/ --enable-objc-gc --enable-__cxa_atexit --disable-libmudflap --disable-libgomp --disable-libssp --disable-libquadmath --disable-libquadmath-support --disable-libsanitizer --disable-libmpx --with-gmp=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpfr=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpc=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-isl=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --enable-lto --with-host-libstdcxx='-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm' --enable-threads=posix --enable-target-optspace --disable-libstdcxx-pch --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-indirect-function --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-gold --with-libintl-prefix=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --disable-multilib --with-local-prefix=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-long-long --enable-checking=release
+        Thread model: posix
+        gcc version 6.4.0 (ctng-1.23.0-150g-FA) 
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o' '-c' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+         /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/cc1 -quiet -v -isysroot /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot /usr/share/cmake-3.28/Modules/CMakeCCompilerABI.c -quiet -dumpbase CMakeCCompilerABI.c -mcpu=cortex-a53 -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o -version -o /tmp/cctZokyy.s
+        GNU C11 (ctng-1.23.0-150g-FA) version 6.4.0 (aarch64-cortexa53-linux-gnu)
+        	compiled by GNU C version 4.8.4, GMP version 6.1.2, MPFR version 3.1.5, MPC version 1.0.3, isl version 0.15
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring nonexistent directory "/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include
+         /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include
+        End of search list.
+        GNU C11 (ctng-1.23.0-150g-FA) version 6.4.0 (aarch64-cortexa53-linux-gnu)
+        	compiled by GNU C version 4.8.4, GMP version 6.1.2, MPFR version 3.1.5, MPC version 1.0.3, isl version 0.15
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: 26cf563c281f5c2260307baf9f648469
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o' '-c' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/as -v -EL -march=armv8-a+crc -mabi=lp64 -o CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o /tmp/cctZokyy.s
+        GNU assembler version 2.28 (aarch64-cortexa53-linux-gnu) using BFD version (ctng-1.23.0-150g-FA) 2.28
+        COMPILER_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/
+        LIBRARY_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o' '-c' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+        Linking C executable cmTC_af245
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_af245.dir/link.txt --verbose=1
+        /opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-gcc  --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot   --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot -v CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o -o cmTC_af245 
+        Using built-in specs.
+        COLLECT_GCC=/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-gcc
+        COLLECT_LTO_WRAPPER=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper
+        Target: aarch64-cortexa53-linux-gnu
+        Configured with: /work/toolchain/build/aarch64-cortexa53-linux-gnu/build/src/gcc/configure --build=x86_64-build_pc-linux-gnu --host=x86_64-build_pc-linux-gnu --target=aarch64-cortexa53-linux-gnu --prefix=/opt/FriendlyARM/toolchain/6.4-aarch64 --with-sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-languages=c,c++ --enable-fix-cortex-a53-835769 --enable-fix-cortex-a53-843419 --with-cpu=cortex-a53 --with-pkgversion=ctng-1.23.0-150g-FA --with-bugurl=http://www.friendlyarm.com/ --enable-objc-gc --enable-__cxa_atexit --disable-libmudflap --disable-libgomp --disable-libssp --disable-libquadmath --disable-libquadmath-support --disable-libsanitizer --disable-libmpx --with-gmp=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpfr=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpc=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-isl=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --enable-lto --with-host-libstdcxx='-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm' --enable-threads=posix --enable-target-optspace --disable-libstdcxx-pch --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-indirect-function --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-gold --with-libintl-prefix=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --disable-multilib --with-local-prefix=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-long-long --enable-checking=release
+        Thread model: posix
+        gcc version 6.4.0 (ctng-1.23.0-150g-FA) 
+        COMPILER_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/
+        LIBRARY_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_af245' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+         /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/collect2 -plugin /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/liblto_plugin.so -plugin-opt=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccM8DJF5.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --build-id --eh-frame-hdr --hash-style=gnu -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux --fix-cortex-a53-835769 --fix-cortex-a53-843419 -o cmTC_af245 /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0 -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_af245' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+        gmake[1]: Leaving directory '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-Vqu4vv'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:127 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:6 (project)"
+    message: |
+      Parsed C implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include]
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed]
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include]
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include]
+        end of search list found
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include]
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed]
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include]
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include]
+        implicit include dirs: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include;/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:159 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:6 (project)"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(aarch64-linux-gnu-ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        ignore line: [Change Dir: '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-Vqu4vv']
+        ignore line: []
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_af245/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_af245.dir/build.make CMakeFiles/cmTC_af245.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-Vqu4vv']
+        ignore line: [Building C object CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-gcc   --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot    -v -o CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.28/Modules/CMakeCCompilerABI.c]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-gcc]
+        ignore line: [Target: aarch64-cortexa53-linux-gnu]
+        ignore line: [Configured with: /work/toolchain/build/aarch64-cortexa53-linux-gnu/build/src/gcc/configure --build=x86_64-build_pc-linux-gnu --host=x86_64-build_pc-linux-gnu --target=aarch64-cortexa53-linux-gnu --prefix=/opt/FriendlyARM/toolchain/6.4-aarch64 --with-sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-languages=c c++ --enable-fix-cortex-a53-835769 --enable-fix-cortex-a53-843419 --with-cpu=cortex-a53 --with-pkgversion=ctng-1.23.0-150g-FA --with-bugurl=http://www.friendlyarm.com/ --enable-objc-gc --enable-__cxa_atexit --disable-libmudflap --disable-libgomp --disable-libssp --disable-libquadmath --disable-libquadmath-support --disable-libsanitizer --disable-libmpx --with-gmp=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpfr=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpc=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-isl=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --enable-lto --with-host-libstdcxx='-static-libgcc -Wl -Bstatic -lstdc++ -Bdynamic -lm' --enable-threads=posix --enable-target-optspace --disable-libstdcxx-pch --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-indirect-function --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-gold --with-libintl-prefix=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --disable-multilib --with-local-prefix=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-long-long --enable-checking=release]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 6.4.0 (ctng-1.23.0-150g-FA) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o' '-c' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/cc1 -quiet -v -isysroot /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot /usr/share/cmake-3.28/Modules/CMakeCCompilerABI.c -quiet -dumpbase CMakeCCompilerABI.c -mcpu=cortex-a53 -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o -version -o /tmp/cctZokyy.s]
+        ignore line: [GNU C11 (ctng-1.23.0-150g-FA) version 6.4.0 (aarch64-cortexa53-linux-gnu)]
+        ignore line: [	compiled by GNU C version 4.8.4  GMP version 6.1.2  MPFR version 3.1.5  MPC version 1.0.3  isl version 0.15]
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [ignoring nonexistent directory "/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include]
+        ignore line: [End of search list.]
+        ignore line: [GNU C11 (ctng-1.23.0-150g-FA) version 6.4.0 (aarch64-cortexa53-linux-gnu)]
+        ignore line: [	compiled by GNU C version 4.8.4  GMP version 6.1.2  MPFR version 3.1.5  MPC version 1.0.3  isl version 0.15]
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [Compiler executable checksum: 26cf563c281f5c2260307baf9f648469]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o' '-c' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/as -v -EL -march=armv8-a+crc -mabi=lp64 -o CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o /tmp/cctZokyy.s]
+        ignore line: [GNU assembler version 2.28 (aarch64-cortexa53-linux-gnu) using BFD version (ctng-1.23.0-150g-FA) 2.28]
+        ignore line: [COMPILER_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/]
+        ignore line: [LIBRARY_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o' '-c' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+        ignore line: [Linking C executable cmTC_af245]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_af245.dir/link.txt --verbose=1]
+        ignore line: [/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-gcc  --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot   --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot -v CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o -o cmTC_af245 ]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-gcc]
+        ignore line: [COLLECT_LTO_WRAPPER=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper]
+        ignore line: [Target: aarch64-cortexa53-linux-gnu]
+        ignore line: [Configured with: /work/toolchain/build/aarch64-cortexa53-linux-gnu/build/src/gcc/configure --build=x86_64-build_pc-linux-gnu --host=x86_64-build_pc-linux-gnu --target=aarch64-cortexa53-linux-gnu --prefix=/opt/FriendlyARM/toolchain/6.4-aarch64 --with-sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-languages=c c++ --enable-fix-cortex-a53-835769 --enable-fix-cortex-a53-843419 --with-cpu=cortex-a53 --with-pkgversion=ctng-1.23.0-150g-FA --with-bugurl=http://www.friendlyarm.com/ --enable-objc-gc --enable-__cxa_atexit --disable-libmudflap --disable-libgomp --disable-libssp --disable-libquadmath --disable-libquadmath-support --disable-libsanitizer --disable-libmpx --with-gmp=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpfr=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpc=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-isl=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --enable-lto --with-host-libstdcxx='-static-libgcc -Wl -Bstatic -lstdc++ -Bdynamic -lm' --enable-threads=posix --enable-target-optspace --disable-libstdcxx-pch --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-indirect-function --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-gold --with-libintl-prefix=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --disable-multilib --with-local-prefix=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-long-long --enable-checking=release]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 6.4.0 (ctng-1.23.0-150g-FA) ]
+        ignore line: [COMPILER_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/]
+        ignore line: [LIBRARY_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_af245' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+        link line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/collect2 -plugin /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/liblto_plugin.so -plugin-opt=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccM8DJF5.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --build-id --eh-frame-hdr --hash-style=gnu -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux --fix-cortex-a53-835769 --fix-cortex-a53-843419 -o cmTC_af245 /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0 -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o]
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/collect2] ==> ignore
+          arg [-plugin] ==> ignore
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/liblto_plugin.so] ==> ignore
+          arg [-plugin-opt=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccM8DJF5.res] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [--sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot] ==> ignore
+          arg [--build-id] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib/ld-linux-aarch64.so.1] ==> ignore
+          arg [-X] ==> ignore
+          arg [-EL] ==> ignore
+          arg [-maarch64linux] ==> ignore
+          arg [--fix-cortex-a53-835769] ==> ignore
+          arg [--fix-cortex-a53-843419] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_af245] ==> ignore
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o]
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o]
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib]
+          arg [CMakeFiles/cmTC_af245.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [-lgcc] ==> lib [gcc]
+          arg [--as-needed] ==> ignore
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [--no-as-needed] ==> ignore
+          arg [-lc] ==> lib [c]
+          arg [-lgcc] ==> lib [gcc]
+          arg [--as-needed] ==> ignore
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [--no-as-needed] ==> ignore
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o]
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o]
+        collapse obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crt1.o]
+        collapse obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crti.o]
+        collapse obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crtn.o]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/lib64]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib64]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/lib]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib]
+        implicit libs: [gcc;gcc_s;c;gcc;gcc_s]
+        implicit objs: [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crt1.o;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crti.o;/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o;/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crtn.o]
+        implicit dirs: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/lib64;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib64;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/lib;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:6 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-UzHudX"
+      binary: "/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-UzHudX"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: " --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-UzHudX'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_7066b/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_7066b.dir/build.make CMakeFiles/cmTC_7066b.dir/build
+        gmake[1]: Entering directory '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-UzHudX'
+        Building CXX object CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o
+        /opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++   --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot  -std=gnu++1z   -v -o CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp
+        Using built-in specs.
+        COLLECT_GCC=/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++
+        Target: aarch64-cortexa53-linux-gnu
+        Configured with: /work/toolchain/build/aarch64-cortexa53-linux-gnu/build/src/gcc/configure --build=x86_64-build_pc-linux-gnu --host=x86_64-build_pc-linux-gnu --target=aarch64-cortexa53-linux-gnu --prefix=/opt/FriendlyARM/toolchain/6.4-aarch64 --with-sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-languages=c,c++ --enable-fix-cortex-a53-835769 --enable-fix-cortex-a53-843419 --with-cpu=cortex-a53 --with-pkgversion=ctng-1.23.0-150g-FA --with-bugurl=http://www.friendlyarm.com/ --enable-objc-gc --enable-__cxa_atexit --disable-libmudflap --disable-libgomp --disable-libssp --disable-libquadmath --disable-libquadmath-support --disable-libsanitizer --disable-libmpx --with-gmp=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpfr=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpc=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-isl=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --enable-lto --with-host-libstdcxx='-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm' --enable-threads=posix --enable-target-optspace --disable-libstdcxx-pch --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-indirect-function --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-gold --with-libintl-prefix=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --disable-multilib --with-local-prefix=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-long-long --enable-checking=release
+        Thread model: posix
+        gcc version 6.4.0 (ctng-1.23.0-150g-FA) 
+        COLLECT_GCC_OPTIONS='-std=gnu++1z' '-v' '-o' 'CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+         /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/cc1plus -quiet -v -isysroot /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot -D_GNU_SOURCE /usr/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mcpu=cortex-a53 -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o -std=gnu++1z -version -o /tmp/ccpWvG2O.s
+        GNU C++14 (ctng-1.23.0-150g-FA) version 6.4.0 (aarch64-cortexa53-linux-gnu)
+        	compiled by GNU C version 4.8.4, GMP version 6.1.2, MPFR version 3.1.5, MPC version 1.0.3, isl version 0.15
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring nonexistent directory "/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0/aarch64-cortexa53-linux-gnu
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0/backward
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include
+         /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include
+        End of search list.
+        GNU C++14 (ctng-1.23.0-150g-FA) version 6.4.0 (aarch64-cortexa53-linux-gnu)
+        	compiled by GNU C version 4.8.4, GMP version 6.1.2, MPFR version 3.1.5, MPC version 1.0.3, isl version 0.15
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        Compiler executable checksum: 9a212a9a309183ffc2828801bff1b3e3
+        COLLECT_GCC_OPTIONS='-std=gnu++1z' '-v' '-o' 'CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+         /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/as -v -EL -march=armv8-a+crc -mabi=lp64 -o CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccpWvG2O.s
+        GNU assembler version 2.28 (aarch64-cortexa53-linux-gnu) using BFD version (ctng-1.23.0-150g-FA) 2.28
+        COMPILER_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/
+        LIBRARY_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/
+        COLLECT_GCC_OPTIONS='-std=gnu++1z' '-v' '-o' 'CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+        Linking CXX executable cmTC_7066b
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7066b.dir/link.txt --verbose=1
+        /opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++  --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot   --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot -v CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_7066b 
+        Using built-in specs.
+        COLLECT_GCC=/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++
+        COLLECT_LTO_WRAPPER=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper
+        Target: aarch64-cortexa53-linux-gnu
+        Configured with: /work/toolchain/build/aarch64-cortexa53-linux-gnu/build/src/gcc/configure --build=x86_64-build_pc-linux-gnu --host=x86_64-build_pc-linux-gnu --target=aarch64-cortexa53-linux-gnu --prefix=/opt/FriendlyARM/toolchain/6.4-aarch64 --with-sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-languages=c,c++ --enable-fix-cortex-a53-835769 --enable-fix-cortex-a53-843419 --with-cpu=cortex-a53 --with-pkgversion=ctng-1.23.0-150g-FA --with-bugurl=http://www.friendlyarm.com/ --enable-objc-gc --enable-__cxa_atexit --disable-libmudflap --disable-libgomp --disable-libssp --disable-libquadmath --disable-libquadmath-support --disable-libsanitizer --disable-libmpx --with-gmp=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpfr=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpc=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-isl=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --enable-lto --with-host-libstdcxx='-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm' --enable-threads=posix --enable-target-optspace --disable-libstdcxx-pch --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-indirect-function --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-gold --with-libintl-prefix=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --disable-multilib --with-local-prefix=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-long-long --enable-checking=release
+        Thread model: posix
+        gcc version 6.4.0 (ctng-1.23.0-150g-FA) 
+        COMPILER_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/
+        LIBRARY_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_7066b' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+         /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/collect2 -plugin /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/liblto_plugin.so -plugin-opt=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccKPqqWu.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --build-id --eh-frame-hdr --hash-style=gnu -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux --fix-cortex-a53-835769 --fix-cortex-a53-843419 -o cmTC_7066b /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0 -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_7066b' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+        gmake[1]: Leaving directory '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-UzHudX'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:127 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:6 (project)"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0]
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0/aarch64-cortexa53-linux-gnu]
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0/backward]
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include]
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed]
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include]
+          add: [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include]
+        end of search list found
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include/c++/6.4.0]
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0/aarch64-cortexa53-linux-gnu] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include/c++/6.4.0/aarch64-cortexa53-linux-gnu]
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0/backward] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include/c++/6.4.0/backward]
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include]
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed]
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include]
+        collapse include dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include]
+        implicit include dirs: [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include/c++/6.4.0;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include/c++/6.4.0/aarch64-cortexa53-linux-gnu;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include/c++/6.4.0/backward;/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include;/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/include;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:159 (message)"
+      - "/usr/share/cmake-3.28/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:6 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(aarch64-linux-gnu-ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        ignore line: [Change Dir: '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-UzHudX']
+        ignore line: []
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_7066b/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_7066b.dir/build.make CMakeFiles/cmTC_7066b.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/seb/Workspace/project_camera/com/build_tc/CMakeFiles/CMakeScratch/TryCompile-UzHudX']
+        ignore line: [Building CXX object CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++   --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot  -std=gnu++1z   -v -o CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++]
+        ignore line: [Target: aarch64-cortexa53-linux-gnu]
+        ignore line: [Configured with: /work/toolchain/build/aarch64-cortexa53-linux-gnu/build/src/gcc/configure --build=x86_64-build_pc-linux-gnu --host=x86_64-build_pc-linux-gnu --target=aarch64-cortexa53-linux-gnu --prefix=/opt/FriendlyARM/toolchain/6.4-aarch64 --with-sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-languages=c c++ --enable-fix-cortex-a53-835769 --enable-fix-cortex-a53-843419 --with-cpu=cortex-a53 --with-pkgversion=ctng-1.23.0-150g-FA --with-bugurl=http://www.friendlyarm.com/ --enable-objc-gc --enable-__cxa_atexit --disable-libmudflap --disable-libgomp --disable-libssp --disable-libquadmath --disable-libquadmath-support --disable-libsanitizer --disable-libmpx --with-gmp=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpfr=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpc=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-isl=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --enable-lto --with-host-libstdcxx='-static-libgcc -Wl -Bstatic -lstdc++ -Bdynamic -lm' --enable-threads=posix --enable-target-optspace --disable-libstdcxx-pch --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-indirect-function --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-gold --with-libintl-prefix=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --disable-multilib --with-local-prefix=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-long-long --enable-checking=release]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 6.4.0 (ctng-1.23.0-150g-FA) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-std=gnu++1z' '-v' '-o' 'CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/cc1plus -quiet -v -isysroot /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot -D_GNU_SOURCE /usr/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mcpu=cortex-a53 -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o -std=gnu++1z -version -o /tmp/ccpWvG2O.s]
+        ignore line: [GNU C++14 (ctng-1.23.0-150g-FA) version 6.4.0 (aarch64-cortexa53-linux-gnu)]
+        ignore line: [	compiled by GNU C version 4.8.4  GMP version 6.1.2  MPFR version 3.1.5  MPC version 1.0.3  isl version 0.15]
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [ignoring nonexistent directory "/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0/aarch64-cortexa53-linux-gnu]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include/c++/6.4.0/backward]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/include-fixed]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/include]
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/include]
+        ignore line: [End of search list.]
+        ignore line: [GNU C++14 (ctng-1.23.0-150g-FA) version 6.4.0 (aarch64-cortexa53-linux-gnu)]
+        ignore line: [	compiled by GNU C version 4.8.4  GMP version 6.1.2  MPFR version 3.1.5  MPC version 1.0.3  isl version 0.15]
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [Compiler executable checksum: 9a212a9a309183ffc2828801bff1b3e3]
+        ignore line: [COLLECT_GCC_OPTIONS='-std=gnu++1z' '-v' '-o' 'CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+        ignore line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/as -v -EL -march=armv8-a+crc -mabi=lp64 -o CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccpWvG2O.s]
+        ignore line: [GNU assembler version 2.28 (aarch64-cortexa53-linux-gnu) using BFD version (ctng-1.23.0-150g-FA) 2.28]
+        ignore line: [COMPILER_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/]
+        ignore line: [LIBRARY_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-std=gnu++1z' '-v' '-o' 'CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+        ignore line: [Linking CXX executable cmTC_7066b]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7066b.dir/link.txt --verbose=1]
+        ignore line: [/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++  --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot   --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot -v CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_7066b ]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++]
+        ignore line: [COLLECT_LTO_WRAPPER=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper]
+        ignore line: [Target: aarch64-cortexa53-linux-gnu]
+        ignore line: [Configured with: /work/toolchain/build/aarch64-cortexa53-linux-gnu/build/src/gcc/configure --build=x86_64-build_pc-linux-gnu --host=x86_64-build_pc-linux-gnu --target=aarch64-cortexa53-linux-gnu --prefix=/opt/FriendlyARM/toolchain/6.4-aarch64 --with-sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-languages=c c++ --enable-fix-cortex-a53-835769 --enable-fix-cortex-a53-843419 --with-cpu=cortex-a53 --with-pkgversion=ctng-1.23.0-150g-FA --with-bugurl=http://www.friendlyarm.com/ --enable-objc-gc --enable-__cxa_atexit --disable-libmudflap --disable-libgomp --disable-libssp --disable-libquadmath --disable-libquadmath-support --disable-libsanitizer --disable-libmpx --with-gmp=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpfr=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-mpc=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --with-isl=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --enable-lto --with-host-libstdcxx='-static-libgcc -Wl -Bstatic -lstdc++ -Bdynamic -lm' --enable-threads=posix --enable-target-optspace --disable-libstdcxx-pch --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --enable-gnu-indirect-function --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-gold --with-libintl-prefix=/work/toolchain/build/aarch64-cortexa53-linux-gnu/buildtools --disable-multilib --with-local-prefix=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --enable-long-long --enable-checking=release]
+        ignore line: [Thread model: posix]
+        ignore line: [gcc version 6.4.0 (ctng-1.23.0-150g-FA) ]
+        ignore line: [COMPILER_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/bin/]
+        ignore line: [LIBRARY_PATH=/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/:/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/:/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_7066b' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+        link line: [ /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/collect2 -plugin /opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/liblto_plugin.so -plugin-opt=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccKPqqWu.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot --build-id --eh-frame-hdr --hash-style=gnu -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux --fix-cortex-a53-835769 --fix-cortex-a53-843419 -o cmTC_7066b /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0 -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64 -L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib -L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o /opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o]
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/collect2] ==> ignore
+          arg [-plugin] ==> ignore
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/liblto_plugin.so] ==> ignore
+          arg [-plugin-opt=/opt/FriendlyARM/toolchain/6.4-aarch64/libexec/gcc/aarch64-cortexa53-linux-gnu/6.4.0/lto-wrapper] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccKPqqWu.res] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [--sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot] ==> ignore
+          arg [--build-id] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib/ld-linux-aarch64.so.1] ==> ignore
+          arg [-X] ==> ignore
+          arg [-EL] ==> ignore
+          arg [-maarch64linux] ==> ignore
+          arg [--fix-cortex-a53-835769] ==> ignore
+          arg [--fix-cortex-a53-843419] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_7066b] ==> ignore
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o]
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o]
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib]
+          arg [-L/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib] ==> dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib]
+          arg [CMakeFiles/cmTC_7066b.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lstdc++] ==> lib [stdc++]
+          arg [-lm] ==> lib [m]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [-lc] ==> lib [c]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o]
+          arg [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o] ==> obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o]
+        collapse obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crt1.o] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crt1.o]
+        collapse obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crti.o] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crti.o]
+        collapse obj [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64/crtn.o] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crtn.o]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib/../lib64] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/lib64]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib/../lib64] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib64]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib/../lib64] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/../../../../aarch64-cortexa53-linux-gnu/lib] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/lib]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib]
+        collapse library dir [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib] ==> [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib]
+        implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+        implicit objs: [/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crt1.o;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crti.o;/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtbegin.o;/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0/crtend.o;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64/crtn.o]
+        implicit dirs: [/opt/FriendlyARM/toolchain/6.4-aarch64/lib/gcc/aarch64-cortexa53-linux-gnu/6.4.0;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/lib64;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib64;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib64;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/lib;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/lib;/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot/usr/lib]
+        implicit fwks: []
+      
+      
+...

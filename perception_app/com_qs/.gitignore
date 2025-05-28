@@ -1,0 +1,13 @@
+/build
+/external
+/install
+/html
+
+.cache
+.idea
+.clang-tidy-cache
+.sublime-workspace
+.vscode
+.DS_Store
+CMakeLists.txt.user*
+build-*

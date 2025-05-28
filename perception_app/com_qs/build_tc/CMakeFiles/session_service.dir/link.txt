@@ -1,0 +1,1 @@
+/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-g++  --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot -O3 -DNDEBUG  --sysroot=/opt/FriendlyARM/toolchain/6.4-aarch64/aarch64-cortexa53-linux-gnu/sysroot CMakeFiles/session_service.dir/test/session_main.cc.o -o output/bin/session_service  output/lib/libcom.a 

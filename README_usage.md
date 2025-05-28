@@ -11,4 +11,8 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE=~/Workspace/project_camera/OrbbecSDK_v2/cmake/aa
 
 make -j8
 
-// code path: examples/0..Demo
+# Run
+cd build/bin
+terminal_1:     ./demo
+terminal_2:     ./state_tester
+
