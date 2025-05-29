@@ -4,11 +4,19 @@
 cmake_minimum_required(VERSION 3.5)
 project(ob_examples_utils)
 
+# 添加头文件列表
+set(HEADERS
+    ${CMAKE_CURRENT_LIST_DIR}/utils_c.h
+    ${CMAKE_CURRENT_LIST_DIR}/utils.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/utils_types.h
+    ${CMAKE_CURRENT_LIST_DIR}/Logger.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/ThreadPool.hpp
+)
+
 add_library(ob_examples_utils STATIC
     ${CMAKE_CURRENT_LIST_DIR}/utils_c.c
-    ${CMAKE_CURRENT_LIST_DIR}/utils_c.h
     ${CMAKE_CURRENT_LIST_DIR}/utils.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/utils.hpp
+    ${HEADERS}
 )
 
 if(${OpenCV_FOUND})

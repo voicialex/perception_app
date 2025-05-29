@@ -22,6 +22,11 @@
 #include "Logger.hpp"
 #include "DeviceManager.hpp"
 #include <opencv2/opencv.hpp>
+#include "utils/ThreadPool.hpp"
+
+namespace ob_smpl {
+    class CVWindow;
+}
 
 /**
  * @brief 图像接收器 - 主要的相机数据处理类
@@ -29,6 +34,15 @@
  */
 class ImageReceiver {
 public:
+    /**
+     * @brief 流状态枚举
+     */
+    enum class StreamState {
+        IDLE,       // 空闲状态
+        RUNNING,    // 运行状态
+        ERROR       // 错误状态
+    };
+
     ImageReceiver();
     ~ImageReceiver();
 
@@ -39,53 +53,31 @@ public:
     bool initialize();
 
     /**
-     * @brief 运行主循环
+     * @brief 运行主循环（UI渲染和事件处理）
      */
     void run();
 
     /**
-     * @brief 停止运行
+     * @brief 停止所有活动并退出
      */
     void stop();
     
     /**
-     * @brief 开始捕获
+     * @brief 开始流处理（合并了管道设置和启动）
+     * @return 是否成功启动
      */
-    void startCapture();
+    bool startStreaming();
     
     /**
-     * @brief 停止捕获
+     * @brief 停止流处理
      */
-    void stopCapture();
+    void stopStreaming();
     
     /**
-     * @brief 设置是否启用帧保存
-     * @param enabled 是否启用
+     * @brief 重启流处理
+     * @return 是否成功重启
      */
-    void setDumpEnabled(bool enabled);
-    
-    /**
-     * @brief 设置是否启用元数据打印
-     * @param enabled 是否启用
-     */
-    void setMetadataEnabled(bool enabled);
-
-    /**
-     * @brief 设置数据流管道
-     * @return 是否成功设置管道
-     */
-    bool setupPipelines();
-    
-    /**
-     * @brief 启动数据流管道
-     * @return 是否成功启动管道
-     */
-    bool startPipelines();
-    
-    /**
-     * @brief 停止数据流管道
-     */
-    void stopPipelines();
+    bool restartStreaming();
 
     // 热插拔相关接口
     void enableHotPlug(bool enable = true);
@@ -102,6 +94,37 @@ public:
      * @return 是否正在显示无信号画面
      */
     bool isNoSignalFrameShowing() const;
+    
+    /**
+     * @brief 获取设备状态
+     * @return 当前设备状态
+     */
+    DeviceManager::DeviceState getDeviceState() const {
+        if (deviceManager_) {
+            return deviceManager_->getDeviceState();
+        }
+        return DeviceManager::DeviceState::DISCONNECTED;
+    }
+    
+    /**
+     * @brief 获取流状态
+     * @return 当前流状态
+     */
+    StreamState getStreamState() const {
+        return streamState_;
+    }
+    
+    /**
+     * @brief 等待设备连接
+     * @param timeoutMs 超时时间(毫秒)，0表示无限等待
+     * @return 是否成功连接
+     */
+    bool waitForDevice(int timeoutMs = 0) {
+        if (deviceManager_) {
+            return deviceManager_->waitForDevice(timeoutMs);
+        }
+        return false;
+    }
 
 private:
     // 核心功能方法
@@ -109,6 +132,11 @@ private:
     void processFrame(std::shared_ptr<ob::Frame> frame);
     void handleError(ob::Error &e);
     void cleanup();
+    
+    // 流管理相关内部方法
+    bool setupPipelines();
+    bool startPipelines();
+    void stopPipelines();
     
     // 数据流管理
     bool isVideoSensorTypeEnabled(OBSensorType sensorType);
@@ -132,6 +160,12 @@ private:
     
     // 无信号画面
     void createNoSignalFrame();
+
+    // 并行处理
+    void processFrameSetParallel(std::shared_ptr<ob::FrameSet> frameset);
+
+    // 清理已完成的任务
+    void cleanupCompletedTasks();
 
 private:
     // 设备管理
@@ -159,10 +193,7 @@ private:
     std::atomic<bool> shouldExit_{false};
     std::atomic<bool> pipelinesRunning_{false};
     std::atomic<bool> isInitialized_{false};
-    
-    // 功能开关
-    std::atomic<bool> dumpEnabled_{false};
-    std::atomic<bool> metadataEnabled_{false};
+    std::atomic<StreamState> streamState_{StreamState::IDLE};
     
     // 性能统计
     struct PerformanceStats {
@@ -183,4 +214,15 @@ private:
     std::atomic<bool> showingNoSignalFrame_{false};
     std::chrono::steady_clock::time_point lastFrameTime_;
     std::atomic<int> noFrameCounter_{0};
+
+    // 线程池
+    std::unique_ptr<utils::ThreadPool> threadPool_;
+    
+    // 并行处理配置
+    bool enableParallelProcessing_ = true;  // 启用并行处理
+    int threadPoolSize_ = 4;                // 线程池大小
+    
+    // 跟踪并行任务完成
+    std::mutex futuresMutex_;
+    std::vector<std::future<void>> frameFutures_;
 };

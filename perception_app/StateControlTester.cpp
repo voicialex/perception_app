@@ -129,6 +129,8 @@ private:
         LOG_INFO("  4 - 切换到 待命(PENDING) 状态 (通过 STANDBY 命令)");
         LOG_INFO("  5 - 获取当前状态");
         LOG_INFO("  6 - 拍照");
+        LOG_INFO("  7 - 开始数据采集");
+        LOG_INFO("  8 - 停止数据采集");
         LOG_INFO("  0 或 q - 退出");
     }
     
@@ -166,6 +168,16 @@ private:
                 case '6':
                     LOG_INFO("拍照");
                     sendCommand("TAKE_SNAPSHOT");
+                    break;
+                    
+                case '7':
+                    LOG_INFO("开始数据采集");
+                    sendCommand("START_CAPTURE");
+                    break;
+                    
+                case '8':
+                    LOG_INFO("停止数据采集");
+                    sendCommand("STOP_CAPTURE");
                     break;
                     
                 case '0': case 'q': case 'Q':
@@ -233,6 +245,12 @@ private:
             currentState_ = message.content.substr(15);
             LOG_INFO("系统启动状态: ", currentState_);
         }
+        else if(message.content == "CAPTURE_STARTED") {
+            LOG_INFO("数据采集已开始，正在保存图像...");
+        }
+        else if(message.content == "CAPTURE_STOPPED") {
+            LOG_INFO("数据采集已停止");
+        }
     }
     
     void handleHeartbeat(const CommunicationProxy::Message& message) {
@@ -287,7 +305,7 @@ private:
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             
             // 发送第一次心跳
-            sendHeartbeat();
+                sendHeartbeat();
             
             while (state_ == ControllerState::RUNNING && !g_exitRequested) {
                 // 检查连接状态
@@ -358,9 +376,9 @@ private:
                 // 使用独立线程发送，避免回调中嵌套发送可能导致的问题
                 std::thread([this]() {
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                    sendHeartbeat();
+                sendHeartbeat();
                     std::this_thread::sleep_for(std::chrono::milliseconds(20));
-                    sendCommand("GET_STATUS");
+                sendCommand("GET_STATUS");
                 }).detach();
                 
                 break;
@@ -379,7 +397,7 @@ private:
         RUNNING,         // 运行中
         STOPPING         // 正在停止
     };
-
+    
     CommunicationProxy& commProxy_;
     std::atomic<ControllerState> state_{ControllerState::UNINITIALIZED};
     

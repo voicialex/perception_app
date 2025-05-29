@@ -33,6 +33,25 @@ bool ImageReceiver::initialize() {
         
         auto& config = ConfigHelper::getInstance();
         
+        // 确保保存目录存在
+        if(config.saveConfig.enableDump) {
+            if(!config.ensureSaveDirectoryExists()) {
+                LOG_WARN("无法创建保存目录，数据保存可能失败");
+            }
+        }
+        
+        // 配置并行处理
+        enableParallelProcessing_ = config.parallelConfig.enableParallelProcessing;
+        threadPoolSize_ = config.parallelConfig.threadPoolSize;
+        
+        // 创建线程池
+        if(enableParallelProcessing_) {
+            threadPool_ = std::make_unique<utils::ThreadPool>(threadPoolSize_);
+            LOG_INFO("创建线程池，线程数: ", threadPool_->size());
+        } else {
+            LOG_INFO("并行处理已禁用，使用串行处理模式");
+        }
+        
         // 创建设备管理器
         deviceManager_ = std::make_unique<DeviceManager>();
         
@@ -357,11 +376,123 @@ void ImageReceiver::processFrameSet(std::shared_ptr<ob::FrameSet> frameset) {
     performanceStats_.frameCount++;
     performanceStats_.totalFrames++;
 
-    std::unique_lock<std::mutex> lk(frameMutex_);
-    for(uint32_t i = 0; i < frameset->frameCount(); ++i) {
+    if(enableParallelProcessing_ && threadPool_) {
+        // 使用并行处理
+        processFrameSetParallel(frameset);
+    } else {
+        // 使用串行处理
+        std::unique_lock<std::mutex> lk(frameMutex_);
+        for(uint32_t i = 0; i < frameset->frameCount(); ++i) {
+            auto frame = frameset->getFrame(i);
+            if(frame) {
+                frameMap_[frame->type()] = frame;
+                processFrame(frame);
+            }
+        }
+    }
+}
+
+void ImageReceiver::processFrameSetParallel(std::shared_ptr<ob::FrameSet> frameset) {
+    if(!frameset || !threadPool_) return;
+    
+    // 清理已完成的任务
+    cleanupCompletedTasks();
+    
+    // 获取帧集合中的帧数量
+    uint32_t frameCount = frameset->frameCount();
+
+    // 记录帧集合信息
+    LOG_DEBUG("收到帧集合，帧数量: ", frameCount, ", 时间戳: ", frameset->timeStamp());
+    
+    // 获取所有帧并并行处理
+    for(uint32_t i = 0; i < frameCount; ++i) {
         auto frame = frameset->getFrame(i);
-        frameMap_[frame->type()] = frame;
-        processFrame(frame);
+        
+        if(!frame) {
+            LOG_WARN("获取到空帧，索引: ", i);
+            continue;
+        }
+        
+        // 记录帧类型
+        OBFrameType frameType = frame->type();
+        // 保存帧引用到帧映射中
+        {
+            std::unique_lock<std::mutex> lk(frameMutex_);
+            frameMap_[frameType] = frame;
+        }
+        
+        // 将处理任务提交到线程池
+        try {
+            std::future<void> future = threadPool_->enqueue(
+                [this, frame]() {
+                    // 记录当前线程ID，以便跟踪多线程执行
+                    std::thread::id threadId = std::this_thread::get_id();
+                    std::stringstream threadIdStr;
+                    threadIdStr << threadId;
+                    LOG_DEBUG("线程", threadIdStr.str(),
+                              "开始处理帧，类型: ", static_cast<int>(frame->type()), 
+                              ", 索引: ", frame->index(), 
+                              ", 时间戳: ", frame->timeStamp());
+
+                            
+                    auto start = std::chrono::steady_clock::now();
+                    this->processFrame(frame);
+                    auto end = std::chrono::steady_clock::now();
+                    
+                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+                    LOG_DEBUG("线程", threadIdStr.str(),
+                              "完成处理帧，类型: ", static_cast<int>(frame->type()), 
+                              ", 索引: ", frame->index(), 
+                              ", 时间戳: ", frame->timeStamp(),
+                              ", 用时： ", duration);
+                }
+            );
+            
+            // 保存future以便跟踪任务完成
+            std::unique_lock<std::mutex> lk(futuresMutex_);
+            frameFutures_.push_back(std::move(future));
+        } 
+        catch(const std::exception& e) {
+            LOG_ERROR("提交任务到线程池失败: ", e.what());
+            // 如果提交失败，在当前线程处理
+            processFrame(frame);
+        }
+    }
+    
+    // 记录任务队列状态
+    {
+        std::unique_lock<std::mutex> lk(futuresMutex_);
+        LOG_DEBUG("当前待处理任务数: ", frameFutures_.size(), 
+                  ", 线程池队列大小: ", threadPool_->queueSize());
+    }
+}
+
+void ImageReceiver::cleanupCompletedTasks() {
+    std::unique_lock<std::mutex> lk(futuresMutex_);
+    
+    // 移除已完成的任务
+    frameFutures_.erase(
+        std::remove_if(
+            frameFutures_.begin(), 
+            frameFutures_.end(),
+            [](std::future<void>& f) {
+                // 检查任务是否已完成
+                return f.valid() && 
+                       f.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
+            }
+        ),
+        frameFutures_.end()
+    );
+    
+    // 如果队列太长，等待一些任务完成
+    auto& config = ConfigHelper::getInstance();
+    if(frameFutures_.size() > static_cast<size_t>(config.parallelConfig.maxQueuedTasks)) {
+        LOG_WARN("等待任务队列中的任务完成，当前队列大小: ", frameFutures_.size());
+        if(!frameFutures_.empty()) {
+            // 等待第一个任务完成
+            frameFutures_[0].wait();
+        }
     }
 }
 
@@ -372,13 +503,20 @@ void ImageReceiver::processFrame(std::shared_ptr<ob::Frame> frame) {
     auto& metadataHelper = MetadataHelper::getInstance();
     auto& frameHelper = DumpHelper::getInstance();
 
+    // 处理元数据
     if(config.metadataConfig.enableMetadata && 
        frame->index() % config.metadataConfig.printInterval == 0) {
         metadataHelper.printMetadata(frame, config.metadataConfig.printInterval);
     }
 
+    // 处理帧保存 - 根据配置的帧间隔控制
     if(config.saveConfig.enableDump) {
-        frameHelper.saveFrame(frame, config.saveConfig.dumpPath);
+        // 使用简化的帧间隔控制逻辑
+        if(frame->index() % config.saveConfig.frameInterval == 0) {
+            LOG_DEBUG("保存帧，类型: ", static_cast<int>(frame->type()), 
+                      ", 索引: ", frame->index());
+            frameHelper.saveFrame(frame, config.saveConfig.dumpPath);
+        }
     }
 }
 
@@ -394,7 +532,7 @@ void ImageReceiver::run() {
         // 初始化时先显示无信号画面
         showNoSignalFrame();
         
-        // 主循环 - 优先检查shouldExit_
+        // 主循环
         while(!shouldExit_) {
             // 检查窗口状态，如果窗口关闭也退出
             if(!window_->run()) {
@@ -524,8 +662,19 @@ void ImageReceiver::printPerformanceStats() {
     LOG_INFO("Total Frames: ", performanceStats_.totalFrames.load());
     LOG_INFO("Device State: ", static_cast<int>(deviceManager_->getDeviceState()));
     LOG_INFO("Pipelines Running: ", pipelinesRunning_.load());
-    LOG_INFO("==============================");
+    
+    // 添加线程池统计
+    if(enableParallelProcessing_ && threadPool_) {
+        std::unique_lock<std::mutex> lk(futuresMutex_);
+        LOG_INFO("Thread Pool Size: ", threadPool_->size());
+        LOG_INFO("Pending Tasks: ", frameFutures_.size());
+        LOG_INFO("Thread Pool Queue Size: ", threadPool_->queueSize());
+    } else {
+        LOG_INFO("Parallel Processing: Disabled");
     }
+    
+    LOG_INFO("==============================");
+}
 
 void ImageReceiver::stop() {
     LOG_INFO("Stopping ImageReceiver...");
@@ -557,6 +706,15 @@ void ImageReceiver::cleanup() {
         
         shouldExit_ = true;
         stopPipelines();
+        
+        // 等待所有任务完成
+        if(threadPool_) {
+            LOG_INFO("等待线程池任务完成...");
+            cleanupCompletedTasks();
+        }
+        
+        // 清理线程池
+        threadPool_.reset();
         
         // 清理无信号帧
         noSignalMat_.release();
@@ -631,47 +789,72 @@ void ImageReceiver::stopPipelines() {
     }
 }
 
-void ImageReceiver::startCapture() {
-    if (!isInitialized_) {
-        LOG_ERROR("Cannot start capture: ImageReceiver not initialized");
-        return;
+bool ImageReceiver::startStreaming() {
+    LOG_INFO("Starting streaming...");
+    
+    if (streamState_ == StreamState::RUNNING) {
+        LOG_WARN("Streaming already running");
+        return true;
     }
     
-    if (pipelinesRunning_) {
-        LOG_WARN("Pipelines already running");
-        return;
+    try {
+        // 设置管道
+        if (!setupPipelines()) {
+            LOG_ERROR("Failed to setup pipelines");
+            streamState_ = StreamState::ERROR;
+            return false;
+        }
+        
+        // 启动管道
+        if (!startPipelines()) {
+            LOG_ERROR("Failed to start pipelines");
+            streamState_ = StreamState::ERROR;
+            return false;
+        }
+        
+        // 更新状态
+        streamState_ = StreamState::RUNNING;
+        LOG_INFO("Streaming started successfully");
+        return true;
     }
-    
-    LOG_INFO("Starting image capture...");
-    
-    // 启动管道
-    if (!startPipelines()) {
-        LOG_ERROR("Failed to start pipelines");
-        return;
+    catch (const std::exception& e) {
+        LOG_ERROR("Failed to start streaming: ", e.what());
+        streamState_ = StreamState::ERROR;
+        return false;
     }
-    
-    LOG_INFO("Image capture started");
 }
 
-void ImageReceiver::stopCapture() {
-    if (!pipelinesRunning_) {
+void ImageReceiver::stopStreaming() {
+    LOG_INFO("Stopping streaming...");
+    
+    if (streamState_ == StreamState::IDLE) {
+        LOG_DEBUG("Streaming already stopped");
         return;
     }
     
-    LOG_INFO("Stopping image capture...");
-    
-    // 停止管道
-    stopPipelines();
-    
-    LOG_INFO("Image capture stopped");
+    try {
+        // 停止管道
+        stopPipelines();
+        
+        // 更新状态
+        streamState_ = StreamState::IDLE;
+        LOG_INFO("Streaming stopped successfully");
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR("Error stopping streaming: ", e.what());
+        streamState_ = StreamState::ERROR;
+    }
 }
 
-void ImageReceiver::setDumpEnabled(bool enabled) {
-    dumpEnabled_ = enabled;
-    LOG_INFO("Frame dump ", enabled ? "enabled" : "disabled");
-}
-
-void ImageReceiver::setMetadataEnabled(bool enabled) {
-    metadataEnabled_ = enabled;
-    LOG_INFO("Metadata printing ", enabled ? "enabled" : "disabled");
+bool ImageReceiver::restartStreaming() {
+    LOG_INFO("Restarting streaming...");
+    
+    // 先停止
+    stopStreaming();
+    
+    // 短暂延迟确保资源释放
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    // 重新启动
+    return startStreaming();
 }

@@ -38,7 +38,7 @@ bool PerceptionSystem::initialize() {
     
     // 设置通信回调
     setupCommunicationCallbacks();
-   
+    
     // 创建图像接收器
     imageReceiver_ = std::make_unique<ImageReceiver>();
     
@@ -72,20 +72,23 @@ void PerceptionSystem::registerStateHandlers() {
 void PerceptionSystem::handleRunningState() {
     LOG_INFO("Handling RUNNING state event");
     
-    // 启动图像接收器
+    // 启动图像接收器流处理
     if(imageReceiver_) {
-        imageReceiver_->startCapture();
-        // 启动数据流管道
-        imageReceiver_->startPipelines();
+        if(imageReceiver_->startStreaming()) {
+            LOG_INFO("Image streaming started successfully");
+        } else {
+            LOG_ERROR("Failed to start image streaming, setting system to ERROR state");
+            setState(SystemState::ERROR);
+        }
     }
 }
 
 void PerceptionSystem::handlePendingState() {
     LOG_INFO("Handling PENDING state event");
     
-    // 停止图像接收器的捕获功能，但保持窗口显示黑色背景
+    // 停止图像接收器的流处理，但保持窗口显示黑色背景
     if(imageReceiver_) {
-        imageReceiver_->stopCapture();
+        imageReceiver_->stopStreaming();
         // 显示无信号画面
         imageReceiver_->showNoSignalFrame();
     }
@@ -96,7 +99,7 @@ void PerceptionSystem::handleErrorState() {
     
     // 停止图像接收器
     if(imageReceiver_) {
-        imageReceiver_->stopCapture();
+        imageReceiver_->stopStreaming();
         // 显示无信号画面
         imageReceiver_->showNoSignalFrame();
     }
@@ -107,7 +110,7 @@ void PerceptionSystem::handleCalibratingState() {
     
     // 停止图像接收器
     if(imageReceiver_) {
-        imageReceiver_->stopCapture();
+        imageReceiver_->stopStreaming();
     }
     
     // 这里可以添加校准相关的代码
@@ -118,7 +121,7 @@ void PerceptionSystem::handleUpgradingState() {
     
     // 停止图像接收器
     if(imageReceiver_) {
-        imageReceiver_->stopCapture();
+        imageReceiver_->stopStreaming();
     }
     
     // 这里可以添加升级相关的代码
@@ -129,7 +132,7 @@ void PerceptionSystem::handleShutdownState() {
     
     // 停止图像接收器
     if(imageReceiver_) {
-        imageReceiver_->stopCapture();
+        imageReceiver_->stopStreaming();
     }
 
     // 停止整个系统
@@ -156,8 +159,29 @@ void PerceptionSystem::run() {
     isRunning_ = true;
     shouldExit_ = false;
     
-    // 设置初始系统状态为待命并触发一次状态处理
-    setState(SystemState::PENDING);
+    // 检查设备管理器状态并等待设备连接
+    if(imageReceiver_) {
+        auto deviceState = imageReceiver_->getDeviceState();
+        LOG_INFO("Current device state: ", static_cast<int>(deviceState));
+        
+        // 如果设备未连接，主动等待设备连接
+        if(deviceState != DeviceManager::DeviceState::CONNECTED) {
+            LOG_INFO("Waiting for device connection...");
+            bool deviceConnected = imageReceiver_->waitForDevice(10000);  // 等待10秒
+            if(deviceConnected) {
+                LOG_INFO("Device connected successfully");
+            } else {
+                LOG_WARN("No device connected within timeout, continuing anyway...");
+            }
+            
+            // 再次检查设备状态
+            deviceState = imageReceiver_->getDeviceState();
+            LOG_INFO("Device state after waiting: ", static_cast<int>(deviceState));
+        }
+    }
+    
+    // 设置初始系统状态为运行状态而不是待命状态
+    setState(SystemState::RUNNING);
     
     // 启动图像接收器的运行循环（非阻塞）
     if(imageReceiver_) {
@@ -200,7 +224,7 @@ void PerceptionSystem::stop() {
     
     // 停止图像接收器
     if(imageReceiver_) {
-        imageReceiver_->stopCapture();
+        imageReceiver_->stopStreaming();
     }
     
     // 停止通信代理
@@ -353,8 +377,28 @@ void PerceptionSystem::handleCommunicationMessage(const CommunicationProxy::Mess
     }
     else if(message.content == "TAKE_SNAPSHOT" && imageReceiver_) {
         LOG_INFO("Taking snapshot command received");
-        // 这里可以添加拍照相关的代码
-        imageReceiver_->setDumpEnabled(true);
+        // 直接修改全局配置而不是调用已删除的方法
+        ConfigHelper::getInstance().saveConfig.enableDump = true;
+    }
+    else if(message.content == "START_CAPTURE") {
+        LOG_INFO("Start capturing command received");
+        // 直接修改全局配置
+        ConfigHelper::getInstance().saveConfig.enableDump = true;
+        LOG_INFO("Data capture started");
+        commProxy_.sendMessage(
+            CommunicationProxy::MessageType::STATUS_REPORT,
+            "CAPTURE_STARTED"
+        );
+    }
+    else if(message.content == "STOP_CAPTURE") {
+        LOG_INFO("Stop capturing command received");
+        // 直接修改全局配置
+        ConfigHelper::getInstance().saveConfig.enableDump = false;
+        LOG_INFO("Data capture stopped");
+        commProxy_.sendMessage(
+            CommunicationProxy::MessageType::STATUS_REPORT,
+            "CAPTURE_STOPPED"
+        );
     }
     else {
         LOG_WARN("Unknown command: ", message.content);
@@ -413,7 +457,7 @@ void PerceptionSystem::handleConnectionStateChanged(CommunicationProxy::Connecti
     if (newState == CommunicationProxy::ConnectionState::CONNECTED) {
         LOG_INFO("通信连接已建立，发送当前状态...");
     }
-}
+} 
 
 void PerceptionSystem::cleanup() {
     LOG_DEBUG("Cleaning up PerceptionSystem resources...");

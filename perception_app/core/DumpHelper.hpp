@@ -19,19 +19,25 @@ private:
     DumpHelper& operator=(const DumpHelper&) = delete;
 
     // 保存深度帧
-    void saveDepthFrame(const std::shared_ptr<ob::DepthFrame> depthFrame, const std::string& path);
+    void saveDepthFrame(const std::shared_ptr<ob::DepthFrame> depthFrame, 
+                       const std::string& path, const std::string& timeStamp);
     
     // 保存彩色帧
-    void saveColorFrame(std::shared_ptr<ob::ColorFrame> colorFrame, const std::string& path);
+    void saveColorFrame(std::shared_ptr<ob::ColorFrame> colorFrame, 
+                       const std::string& path, const std::string& timeStamp);
     
     // 保存IMU帧
-    void saveIMUFrame(const std::shared_ptr<ob::Frame> frame, const std::string& path);
+    void saveIMUFrame(const std::shared_ptr<ob::Frame> frame, 
+                     const std::string& path, const std::string& timeStamp);
 
     // 检查是否为视频帧
     bool isVideoFrame(OBFrameType type);
     
     // 检查是否为IMU帧
     bool isIMUFrame(OBFrameType type);
+    
+    // 生成统一的时间戳字符串
+    std::string generateTimeStamp();
 
     // 格式转换器
     std::shared_ptr<ob::FormatConvertFilter> formatConverter_;

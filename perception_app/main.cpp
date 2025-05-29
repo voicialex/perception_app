@@ -55,6 +55,18 @@ int main() {
         
         // 获取配置并验证
         auto& config = ConfigHelper::getInstance();
+
+        // 添加这里：明确设置关键配置参数
+        config.streamConfig.enableColor = true;
+        config.streamConfig.enableDepth = true;
+        config.renderConfig.enableRendering = true;
+        config.hotPlugConfig.enableHotPlug = true;
+        config.hotPlugConfig.waitForDeviceOnStartup = true;
+        config.debugConfig.enableDebugOutput = true;
+
+        // 设置调试级别以获取更多信息
+        Logger::getInstance().setLevel("DEBUG");
+
         if(!config.validateAll()) {
             LOG_ERROR("Configuration validation failed!");
             return -1;

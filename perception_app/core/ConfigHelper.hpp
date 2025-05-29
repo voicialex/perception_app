@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <filesystem>
 
 /**
  * @brief 配置管理器 - 单例模式
@@ -60,13 +61,15 @@ public:
         std::string dumpPath = "./dumps/";   // 保存路径
         bool saveColor = true;               // 保存彩色图像
         bool saveDepth = true;               // 保存深度图像
-        bool savePointCloud = false;        // 保存点云数据
+        bool savePointCloud = false;         // 保存点云数据
         std::string imageFormat = "png";     // 图像格式
         int maxFramesToSave = 1000;          // 最大保存帧数
+        int frameInterval = 10;              // 保存帧间隔（每N帧保存一帧，值越大保存频率越低）
         
         bool validate() const {
             return !dumpPath.empty() && maxFramesToSave > 0 &&
-                   (imageFormat == "png" || imageFormat == "jpg" || imageFormat == "bmp");
+                   (imageFormat == "png" || imageFormat == "jpg" || imageFormat == "bmp") &&
+                   frameInterval > 0;
         }
     } saveConfig;
 
@@ -113,6 +116,69 @@ public:
         }
     } debugConfig;
 
+    // 并行处理配置
+    struct ParallelConfig {
+        bool enableParallelProcessing = true;    // 启用并行处理
+        int threadPoolSize = 4;                  // 线程池大小（0表示使用硬件并发数）
+        int maxQueuedTasks = 100;                // 最大排队任务数
+        
+        bool validate() const {
+            return threadPoolSize >= 0 && maxQueuedTasks > 0;
+        }
+    } parallelConfig;
+
+    /**
+     * @brief 确保目录存在，并规范化路径
+     * @param path 需要检查和创建的目录路径
+     * @param addTrailingSlash 是否确保路径末尾有斜杠
+     * @return 规范化后的路径，如果创建失败则返回空字符串
+     */
+    static std::string ensureDirectoryExists(const std::string& path, bool addTrailingSlash = true) {
+        try {
+            if(path.empty()) {
+                std::cerr << "路径为空" << std::endl;
+                return "";
+            }
+            
+            // 规范化路径
+            std::string normPath = path;
+            
+            // 确保路径末尾有斜杠（如果需要）
+            if(addTrailingSlash && !normPath.empty() && normPath.back() != '/') {
+                normPath += '/';
+            }
+            
+            // 创建目录（如果不存在）
+            if(!std::filesystem::exists(normPath)) {
+                if(std::filesystem::create_directories(normPath)) {
+                    std::cout << "已创建目录: " << normPath << std::endl;
+                } else {
+                    std::cerr << "创建目录失败: " << normPath << std::endl;
+                    return "";
+                }
+            }
+            
+            return normPath;
+        }
+        catch(const std::exception& e) {
+            std::cerr << "处理目录时发生错误: " << e.what() << std::endl;
+            return "";
+        }
+    }
+
+    /**
+     * @brief 确保保存目录存在
+     * @return 如果目录存在或创建成功则返回true
+     */
+    bool ensureSaveDirectoryExists() {
+        std::string normPath = ensureDirectoryExists(saveConfig.dumpPath);
+        if(!normPath.empty()) {
+            saveConfig.dumpPath = normPath;
+            return true;
+        }
+        return false;
+    }
+
     /**
      * @brief 验证所有配置的有效性
      * @return true if all configurations are valid
@@ -123,7 +189,8 @@ public:
                saveConfig.validate() && 
                metadataConfig.validate() && 
                hotPlugConfig.validate() && 
-               debugConfig.validate();
+               debugConfig.validate() &&
+               parallelConfig.validate();
     }
 
     /**
@@ -141,6 +208,9 @@ public:
                   << ", MaxAttempts=" << hotPlugConfig.maxReconnectAttempts << std::endl;
         std::cout << "Debug: Level=" << debugConfig.logLevel 
                   << ", Performance=" << debugConfig.enablePerformanceStats << std::endl;
+        std::cout << "Parallel: Enabled=" << parallelConfig.enableParallelProcessing 
+                  << ", ThreadPoolSize=" << parallelConfig.threadPoolSize 
+                  << ", MaxQueuedTasks=" << parallelConfig.maxQueuedTasks << std::endl;
         std::cout << "============================\n" << std::endl;
     }
 
@@ -154,6 +224,7 @@ public:
         metadataConfig = MetadataConfig{};
         hotPlugConfig = HotPlugConfig{};
         debugConfig = DebugConfig{};
+        parallelConfig = ParallelConfig{};
     }
 
 private:

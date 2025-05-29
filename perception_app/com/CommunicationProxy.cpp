@@ -49,7 +49,7 @@ bool CommunicationProxy::initialize(const std::string& basePath, CommRole role) 
     }
     
     // 创建线程池
-    threadPool_ = std::make_unique<ThreadPool>(DEFAULT_THREAD_POOL_SIZE);
+    threadPool_ = std::make_unique<utils::ThreadPool>(DEFAULT_THREAD_POOL_SIZE);
     
     isInitialized_ = true;
     LOG_INFO("通信代理初始化成功");
@@ -226,7 +226,7 @@ void CommunicationProxy::messageReceivingThread() {
                     } else {
                         // 其他消息异步处理
                         Message msgCopy = message; // 创建消息的副本
-                        threadPool_->enqueue([this, msgCopy]() {
+                        threadPool_->submit([this, msgCopy]() {
                             processReceivedMessage(msgCopy);
                         });
                     }

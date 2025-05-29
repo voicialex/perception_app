@@ -13,91 +13,7 @@
 #include <vector>
 #include "ICommunicationImpl.hpp"
 #include "FifoComm.hpp"
-
-/**
- * @brief 简单线程池实现
- */
-class ThreadPool {
-public:
-    /**
-     * @brief 构造函数
-     * @param numThreads 线程数量
-     */
-    ThreadPool(size_t numThreads) : stop_(false) {
-        for(size_t i = 0; i < numThreads; ++i) {
-            threads_.emplace_back([this] {
-                while(true) {
-                    std::function<void()> task;
-                    
-                    {
-                        std::unique_lock<std::mutex> lock(queueMutex_);
-                        condition_.wait(lock, [this] { 
-                            return stop_ || !tasks_.empty(); 
-                        });
-                        
-                        if(stop_ && tasks_.empty()) {
-                            return;
-                        }
-                        
-                        task = std::move(tasks_.front());
-                        tasks_.pop();
-                    }
-                    
-                    task();
-                }
-            });
-        }
-    }
-    
-    /**
-     * @brief 析构函数
-     */
-    ~ThreadPool() {
-        {
-            std::unique_lock<std::mutex> lock(queueMutex_);
-            stop_ = true;
-        }
-        
-        condition_.notify_all();
-        
-        for(auto& thread : threads_) {
-            if(thread.joinable()) {
-                thread.join();
-            }
-        }
-    }
-    
-    /**
-     * @brief 提交任务到线程池
-     * @param task 任务函数
-     */
-    template<class F>
-    void enqueue(F&& task) {
-        {
-            std::unique_lock<std::mutex> lock(queueMutex_);
-            
-            // 不接受新任务如果线程池已停止
-            if(stop_) {
-                return;
-            }
-            
-            tasks_.emplace(std::forward<F>(task));
-        }
-        
-        condition_.notify_one();
-    }
-    
-private:
-    // 工作线程
-    std::vector<std::thread> threads_;
-    // 任务队列
-    std::queue<std::function<void()>> tasks_;
-    
-    // 同步
-    std::mutex queueMutex_;
-    std::condition_variable condition_;
-    bool stop_;
-};
+#include "../utils/ThreadPool.hpp"
 
 /**
  * @brief 通信代理类 - 单例模式
@@ -303,7 +219,7 @@ private:
     std::unique_ptr<ICommunicationImpl> commImpl_;
     
     // 线程池
-    std::unique_ptr<ThreadPool> threadPool_;
+    std::unique_ptr<utils::ThreadPool> threadPool_;
     
     // 回调函数
     std::map<MessageType, MessageCallback> callbacks_; // 回调函数映射
