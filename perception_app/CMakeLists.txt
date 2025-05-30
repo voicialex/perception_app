@@ -32,23 +32,29 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/core
     ${CMAKE_CURRENT_SOURCE_DIR}/com
     ${CMAKE_CURRENT_SOURCE_DIR}/com_qs
+    ${CMAKE_CURRENT_SOURCE_DIR}/inference
+    ${CMAKE_CURRENT_SOURCE_DIR}/calibration
 )
 
 # 添加子目录 - 先添加工具库
 add_subdirectory(utils)
 add_subdirectory(core)
 add_subdirectory(com)
+add_subdirectory(inference)
+add_subdirectory(calibration)
 
 #----------------------------------------------------------------------
 # perception_app应用
 #----------------------------------------------------------------------
 add_executable(perception_app main.cpp)
 
-# 链接库
+# 链接库 - 使用统一的perception命名
 target_link_libraries(perception_app PRIVATE
     perception::core
     perception::com
     perception::utils
+    perception::inference
+    perception::calibration
     ob::OrbbecSDK
 )
 
@@ -85,6 +91,24 @@ target_link_libraries(state_tester PRIVATE
 
 # 安装
 install(TARGETS state_tester RUNTIME DESTINATION bin)
+
+#----------------------------------------------------------------------
+# inference_demo应用
+#----------------------------------------------------------------------
+add_executable(inference_demo inference_demo.cpp)
+
+# 链接库 - 使用统一的perception命名
+target_link_libraries(inference_demo PRIVATE
+    perception::core
+    perception::com
+    perception::utils
+    perception::inference
+    perception::calibration
+    ob::OrbbecSDK
+)
+
+# 安装
+install(TARGETS inference_demo RUNTIME DESTINATION bin)
 
 # 添加测试目标
 add_custom_target(run_camera_test

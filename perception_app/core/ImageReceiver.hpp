@@ -11,6 +11,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <memory>
+#include <functional>
 
 #include "libobsensor/ObSensor.hpp"
 #include "libobsensor/hpp/Error.hpp"
@@ -23,10 +24,6 @@
 #include "DeviceManager.hpp"
 #include <opencv2/opencv.hpp>
 #include "utils/ThreadPool.hpp"
-
-namespace ob_smpl {
-    class CVWindow;
-}
 
 /**
  * @brief 图像接收器 - 主要的相机数据处理类
@@ -42,6 +39,11 @@ public:
         RUNNING,    // 运行状态
         ERROR       // 错误状态
     };
+
+    /**
+     * @brief 帧处理回调函数类型
+     */
+    using FrameProcessCallback = std::function<void(std::shared_ptr<ob::Frame>, OBFrameType)>;
 
     ImageReceiver();
     ~ImageReceiver();
@@ -124,6 +126,14 @@ public:
             return deviceManager_->waitForDevice(timeoutMs);
         }
         return false;
+    }
+    
+    /**
+     * @brief 设置帧处理回调（由 PerceptionSystem 调用）
+     * @param callback 回调函数
+     */
+    void setFrameProcessCallback(FrameProcessCallback callback) {
+        frameProcessCallback_ = callback;
     }
 
 private:
@@ -234,4 +244,7 @@ private:
     // 跟踪并行任务完成
     std::mutex futuresMutex_;
     std::vector<std::future<void>> frameFutures_;
+    
+    // 帧处理回调（与 PerceptionSystem 通信）
+    FrameProcessCallback frameProcessCallback_;
 };

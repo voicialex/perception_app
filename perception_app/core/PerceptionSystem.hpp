@@ -9,12 +9,14 @@
 #include <queue>
 #include "ImageReceiver.hpp"
 #include "CommunicationProxy.hpp"
+#include "inference/InferenceManager.hpp"
+#include "calibration/CalibrationManager.hpp"
 
 /**
  * @brief 感知系统 - 整个相机系统的主控制类
  * 
  * 负责系统状态管理、组件协调和通信接口
- * 采用单例模式设计
+ * 采用单例模式设计，集成推理和标定功能
  */
 class PerceptionSystem {
 public:
@@ -78,6 +80,63 @@ public:
      */
     static std::string getStateName(SystemState state);
     
+    /**
+     * @brief 处理帧数据（由 ImageReceiver 调用）
+     * @param frame Orbbec帧数据
+     * @param frameType 帧类型
+     */
+    void processFrame(std::shared_ptr<ob::Frame> frame, OBFrameType frameType);
+    
+    /**
+     * @brief 获取推理管理器
+     * @return 推理管理器引用
+     */
+    inference::InferenceManager& getInferenceManager() { 
+        return inference::InferenceManager::getInstance(); 
+    }
+    
+    /**
+     * @brief 获取标定管理器
+     * @return 标定管理器引用
+     */
+    calibration::CalibrationManager& getCalibrationManager() { 
+        return calibration::CalibrationManager::getInstance(); 
+    }
+    
+    /**
+     * @brief 启动推理功能
+     * @return 是否成功启动
+     */
+    bool enableInference();
+    
+    /**
+     * @brief 停止推理功能
+     */
+    void disableInference();
+    
+    /**
+     * @brief 启动标定功能
+     * @return 是否成功启动
+     */
+    bool enableCalibration();
+    
+    /**
+     * @brief 停止标定功能
+     */
+    void disableCalibration();
+    
+    /**
+     * @brief 检查推理是否启用
+     * @return 是否启用
+     */
+    bool isInferenceEnabled() const { return inferenceEnabled_; }
+    
+    /**
+     * @brief 检查标定是否启用
+     * @return 是否启用
+     */
+    bool isCalibrationEnabled() const { return calibrationEnabled_; }
+
 private:
     /**
      * @brief 私有构造函数，实现单例模式
@@ -167,6 +226,40 @@ private:
      */
     void handleConnectionStateChanged(CommunicationProxy::ConnectionState newState);
     
+    /**
+     * @brief 初始化推理系统
+     * @return 是否成功
+     */
+    bool initializeInferenceSystem();
+    
+    /**
+     * @brief 初始化标定系统
+     * @return 是否成功
+     */
+    bool initializeCalibrationSystem();
+    
+    /**
+     * @brief 处理推理结果
+     * @param modelName 模型名称
+     * @param image 输入图像
+     * @param result 推理结果
+     */
+    void handleInferenceResult(const std::string& modelName, 
+                              const cv::Mat& image,
+                              std::shared_ptr<inference::InferenceResult> result);
+    
+    /**
+     * @brief 处理标定进度
+     * @param state 标定状态
+     * @param currentFrames 当前帧数
+     * @param totalFrames 总帧数
+     * @param message 消息
+     */
+    void handleCalibrationProgress(calibration::CalibrationState state,
+                                  int currentFrames,
+                                  int totalFrames,
+                                  const std::string& message);
+    
     // 成员变量
     CommunicationProxy& commProxy_;             ///< 通信代理引用
     std::unique_ptr<ImageReceiver> imageReceiver_; ///< 图像接收器
@@ -181,4 +274,8 @@ private:
     
     // 状态处理函数映射
     std::map<SystemState, StateHandler> stateHandlers_;
+    
+    // 推理和标定功能状态
+    std::atomic<bool> inferenceEnabled_{false};   ///< 推理功能启用标志
+    std::atomic<bool> calibrationEnabled_{false}; ///< 标定功能启用标志
 }; 

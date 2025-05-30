@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <functional>
+#include <opencv2/opencv.hpp>
 
 // 单例实现
 PerceptionSystem& PerceptionSystem::getInstance() {
@@ -42,10 +43,25 @@ bool PerceptionSystem::initialize() {
     // 创建图像接收器
     imageReceiver_ = std::make_unique<ImageReceiver>();
     
+    // 设置帧处理回调，使 ImageReceiver 与 PerceptionSystem 解耦
+    imageReceiver_->setFrameProcessCallback([this](std::shared_ptr<ob::Frame> frame, OBFrameType frameType) {
+        this->processFrame(frame, frameType);
+    });
+    
     // 初始化图像接收器
     if(!imageReceiver_->initialize()) {
         LOG_ERROR("Failed to initialize ImageReceiver");
         return false;
+    }
+    
+    // 初始化推理系统
+    if (!initializeInferenceSystem()) {
+        LOG_WARN("Failed to initialize inference system");
+    }
+    
+    // 初始化标定系统
+    if (!initializeCalibrationSystem()) {
+        LOG_WARN("Failed to initialize calibration system");
     }
     
     // 初始化后立即显示黑色无信号画面
@@ -57,6 +73,231 @@ bool PerceptionSystem::initialize() {
     isInitialized_ = true;
     LOG_INFO("PerceptionSystem initialized successfully");
     return true;
+}
+
+void PerceptionSystem::processFrame(std::shared_ptr<ob::Frame> frame, OBFrameType frameType) {
+    if (!frame || !isInitialized_) {
+        return;
+    }
+    
+    // 处理推理
+    if (inferenceEnabled_ && getInferenceManager().isInitialized()) {
+        try {
+            getInferenceManager().processFrame(frame, frameType);
+        } catch (const std::exception& e) {
+            LOG_ERROR("Inference processing failed: ", e.what());
+        }
+    }
+    
+    // 处理标定
+    if (calibrationEnabled_ && getCalibrationManager().isInitialized()) {
+        try {
+            getCalibrationManager().processFrame(frame);
+        } catch (const std::exception& e) {
+            LOG_ERROR("Calibration processing failed: ", e.what());
+        }
+    }
+}
+
+bool PerceptionSystem::enableInference() {
+    auto& config = ConfigHelper::getInstance();
+    
+    if (!config.inferenceConfig.enableInference) {
+        LOG_WARN("Inference disabled in configuration");
+        return false;
+    }
+    
+    if (!getInferenceManager().isInitialized()) {
+        LOG_ERROR("Inference manager not initialized");
+        return false;
+    }
+    
+    inferenceEnabled_ = true;
+    LOG_INFO("Inference enabled");
+    return true;
+}
+
+void PerceptionSystem::disableInference() {
+    inferenceEnabled_ = false;
+    LOG_INFO("Inference disabled");
+}
+
+bool PerceptionSystem::enableCalibration() {
+    auto& config = ConfigHelper::getInstance();
+    
+    if (!config.calibrationConfig.enableCalibration) {
+        LOG_WARN("Calibration disabled in configuration");
+        return false;
+    }
+    
+    if (!getCalibrationManager().isInitialized()) {
+        LOG_ERROR("Calibration manager not initialized");
+        return false;
+    }
+    
+    calibrationEnabled_ = true;
+    LOG_INFO("Calibration enabled");
+    return true;
+}
+
+void PerceptionSystem::disableCalibration() {
+    calibrationEnabled_ = false;
+    getCalibrationManager().stopCalibration();
+    LOG_INFO("Calibration disabled");
+}
+
+bool PerceptionSystem::initializeInferenceSystem() {
+    auto& config = ConfigHelper::getInstance();
+    
+    if (!config.inferenceConfig.enableInference) {
+        LOG_INFO("Inference system disabled by configuration");
+        return true;
+    }
+    
+    try {
+        auto& inferenceManager = getInferenceManager();
+        
+        // 创建推理配置
+        inference::InferenceConfig inferenceConfig;
+        inferenceConfig.enableInference = config.inferenceConfig.enableInference;
+        inferenceConfig.defaultModel = config.inferenceConfig.defaultModel;
+        inferenceConfig.defaultModelType = config.inferenceConfig.defaultModelType;
+        inferenceConfig.defaultThreshold = config.inferenceConfig.defaultThreshold;
+        inferenceConfig.enableVisualization = config.inferenceConfig.enableVisualization;
+        inferenceConfig.enablePerformanceStats = config.inferenceConfig.enablePerformanceStats;
+        inferenceConfig.inferenceInterval = config.inferenceConfig.inferenceInterval;
+        inferenceConfig.classNamesFile = config.inferenceConfig.classNamesFile;
+        inferenceConfig.asyncInference = config.inferenceConfig.asyncInference;
+        inferenceConfig.maxQueueSize = config.inferenceConfig.maxQueueSize;
+        
+        // 设置推理回调
+        inferenceManager.setInferenceCallback(
+            [this](const std::string& modelName, const cv::Mat& image, 
+                   std::shared_ptr<inference::InferenceResult> result) {
+                this->handleInferenceResult(modelName, image, result);
+            }
+        );
+        
+        // 初始化推理管理器
+        if (!inferenceManager.initialize(inferenceConfig)) {
+            LOG_ERROR("Failed to initialize inference manager");
+            return false;
+        }
+        
+        // 自动启用推理功能
+        inferenceEnabled_ = true;
+        
+        LOG_INFO("Inference system initialized successfully");
+        return true;
+    } catch (const std::exception& e) {
+        LOG_ERROR("Error initializing inference system: ", e.what());
+        return false;
+    }
+}
+
+bool PerceptionSystem::initializeCalibrationSystem() {
+    auto& config = ConfigHelper::getInstance();
+    
+    if (!config.calibrationConfig.enableCalibration) {
+        LOG_INFO("Calibration system disabled by configuration");
+        return true;
+    }
+    
+    try {
+        auto& calibrationManager = getCalibrationManager();
+        
+        // 初始化标定管理器
+        if (!calibrationManager.initialize()) {
+            LOG_ERROR("Failed to initialize calibration manager");
+            return false;
+        }
+        
+        // 设置标定进度回调
+        calibrationManager.setProgressCallback(
+            [this](calibration::CalibrationState state, int currentFrames, 
+                   int totalFrames, const std::string& message) {
+                this->handleCalibrationProgress(state, currentFrames, totalFrames, message);
+            }
+        );
+        
+        // 如果配置了自动启动标定
+        if (config.calibrationConfig.autoStartCalibrationOnStartup) {
+            calibration::CalibrationConfig calibConfig;
+            calibConfig.boardWidth = config.calibrationConfig.boardWidth;
+            calibConfig.boardHeight = config.calibrationConfig.boardHeight;
+            calibConfig.squareSize = config.calibrationConfig.squareSize;
+            calibConfig.minValidFrames = config.calibrationConfig.minValidFrames;
+            calibConfig.maxFrames = config.calibrationConfig.maxFrames;
+            calibConfig.minInterval = config.calibrationConfig.minInterval;
+            calibConfig.useSubPixel = config.calibrationConfig.useSubPixel;
+            calibConfig.enableUndistortion = config.calibrationConfig.enableUndistortion;
+            calibConfig.saveDirectory = config.calibrationConfig.saveDirectory;
+            
+            if (!calibrationManager.startCalibration(calibConfig)) {
+                LOG_ERROR("Failed to start camera calibration");
+                return false;
+            }
+            
+            LOG_INFO("Camera calibration started automatically");
+        }
+        
+        // 自动启用标定功能
+        calibrationEnabled_ = true;
+        
+        LOG_INFO("Calibration system initialized successfully");
+        return true;
+    } catch (const std::exception& e) {
+        LOG_ERROR("Error initializing calibration system: ", e.what());
+        return false;
+    }
+}
+
+void PerceptionSystem::handleInferenceResult(const std::string& modelName, 
+                                            const cv::Mat& image,
+                                            std::shared_ptr<inference::InferenceResult> result) {
+    (void)image; // 消除未使用参数警告
+    
+    if (!result || !result->isValid()) {
+        return;
+    }
+    
+    auto& config = ConfigHelper::getInstance();
+    
+    if (config.inferenceConfig.enablePerformanceStats && 
+        config.debugConfig.enableDebugOutput) {
+        LOG_DEBUG("Inference result for ", modelName, ": ", result->getSummary(), 
+                  ", time: ", result->getInferenceTime(), " ms");
+    }
+    
+    // 这里可以添加结果可视化或其他处理逻辑
+    // 例如：在渲染的图像上绘制检测框、分类结果等
+}
+
+void PerceptionSystem::handleCalibrationProgress(calibration::CalibrationState state,
+                                                int currentFrames,
+                                                int totalFrames,
+                                                const std::string& message) {
+    auto& config = ConfigHelper::getInstance();
+    
+    if (config.calibrationConfig.showCalibrationProgress) {
+        std::string stateStr;
+        switch (state) {
+            case calibration::CalibrationState::IDLE: stateStr = "IDLE"; break;
+            case calibration::CalibrationState::COLLECTING: stateStr = "COLLECTING"; break;
+            case calibration::CalibrationState::PROCESSING: stateStr = "PROCESSING"; break;
+            case calibration::CalibrationState::COMPLETED: stateStr = "COMPLETED"; break;
+            case calibration::CalibrationState::FAILED: stateStr = "FAILED"; break;
+        }
+        
+        LOG_INFO("标定进度: ", stateStr, " (", currentFrames, "/", totalFrames, ") - ", message);
+        
+        if (state == calibration::CalibrationState::COMPLETED) {
+            auto result = getCalibrationManager().getLastResult();
+            if (result.isValid) {
+                LOG_INFO("标定完成! ", result.getSummary());
+            }
+        }
+    }
 }
 
 void PerceptionSystem::registerStateHandlers() {
@@ -457,7 +698,7 @@ void PerceptionSystem::handleConnectionStateChanged(CommunicationProxy::Connecti
     if (newState == CommunicationProxy::ConnectionState::CONNECTED) {
         LOG_INFO("Communication connection established, sending current state...");
     }
-} 
+}
 
 void PerceptionSystem::cleanup() {
     LOG_DEBUG("Cleaning up PerceptionSystem resources...");

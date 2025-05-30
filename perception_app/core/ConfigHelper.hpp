@@ -129,6 +129,49 @@ public:
         }
     } parallelConfig;
 
+    // 推理配置
+    struct InferenceConfig {
+        bool enableInference = false;           // 是否启用推理
+        std::string defaultModel = "";          // 默认模型路径
+        std::string defaultModelType = "";      // 默认模型类型
+        float defaultThreshold = 0.5f;          // 默认置信度阈值
+        bool enableVisualization = true;       // 是否启用可视化
+        bool enablePerformanceStats = true;    // 是否启用性能统计
+        int inferenceInterval = 1;             // 推理间隔（每N帧推理一次）
+        std::string classNamesFile = "";       // 类别名称文件路径
+        bool asyncInference = true;            // 是否异步推理
+        int maxQueueSize = 10;                 // 异步推理队列最大大小
+        std::string modelsDirectory = "./models/"; // 模型目录
+        bool enableFramePreprocessing = true;  // 是否启用帧预处理
+        bool onlyProcessColorFrames = true;    // 是否只处理彩色帧
+        
+        bool validate() const {
+            return inferenceInterval > 0 && defaultThreshold >= 0.0f && 
+                   defaultThreshold <= 1.0f && maxQueueSize > 0;
+        }
+    } inferenceConfig;
+
+    // 相机标定配置
+    struct CalibrationConfig {
+        bool enableCalibration = false;         // 是否启用标定功能
+        int boardWidth = 9;                     // 棋盘宽度（内角点数）
+        int boardHeight = 6;                    // 棋盘高度（内角点数）
+        float squareSize = 1.0f;                // 方格大小（实际物理尺寸，单位：mm）
+        int minValidFrames = 20;                // 最少需要的有效帧数
+        int maxFrames = 50;                     // 最大采集帧数
+        double minInterval = 1.0;               // 采集间隔（秒）
+        bool useSubPixel = true;                // 是否使用亚像素精度
+        bool enableUndistortion = true;         // 是否启用去畸变
+        std::string saveDirectory = "./calibration/"; // 保存目录
+        bool autoStartCalibrationOnStartup = false; // 启动时自动开始标定
+        bool showCalibrationProgress = true;    // 显示标定进度
+        
+        bool validate() const {
+            return boardWidth > 0 && boardHeight > 0 && squareSize > 0 && 
+                   minValidFrames > 0 && maxFrames >= minValidFrames && minInterval > 0;
+        }
+    } calibrationConfig;
+
     /**
      * @brief 确保目录存在，并规范化路径
      * @param path 需要检查和创建的目录路径
@@ -192,7 +235,9 @@ public:
                metadataConfig.validate() && 
                hotPlugConfig.validate() && 
                debugConfig.validate() &&
-               parallelConfig.validate();
+               parallelConfig.validate() &&
+               inferenceConfig.validate() &&
+               calibrationConfig.validate();
     }
 
     /**
@@ -221,6 +266,17 @@ public:
         LOG_INFO("Parallel: Enabled=", parallelConfig.enableParallelProcessing, 
                  ", ThreadPoolSize=", parallelConfig.threadPoolSize, 
                  ", MaxQueuedTasks=", parallelConfig.maxQueuedTasks);
+        LOG_INFO("Inference: Enabled=", inferenceConfig.enableInference,
+                 ", DefaultModel=", inferenceConfig.defaultModel,
+                 ", DefaultModelType=", inferenceConfig.defaultModelType,
+                 ", DefaultThreshold=", inferenceConfig.defaultThreshold);
+        LOG_INFO("Calibration: Enabled=", calibrationConfig.enableCalibration,
+                 ", BoardWidth=", calibrationConfig.boardWidth,
+                 ", BoardHeight=", calibrationConfig.boardHeight,
+                 ", SquareSize=", calibrationConfig.squareSize,
+                 ", MinValidFrames=", calibrationConfig.minValidFrames,
+                 ", MaxFrames=", calibrationConfig.maxFrames,
+                 ", MinInterval=", calibrationConfig.minInterval);
         LOG_INFO("============================");
     }
 
@@ -235,6 +291,8 @@ public:
         hotPlugConfig = HotPlugConfig{};
         debugConfig = DebugConfig{};
         parallelConfig = ParallelConfig{};
+        inferenceConfig = InferenceConfig{};
+        calibrationConfig = CalibrationConfig{};
     }
 
 private:

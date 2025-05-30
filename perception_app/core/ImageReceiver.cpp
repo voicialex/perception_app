@@ -189,7 +189,6 @@ void ImageReceiver::setupKeyboardCallbacks() {
 }
 
 void ImageReceiver::handleKeyPress(int key) {
-    // LOG_INFO("Controls: ESC-Exit, R-Reboot, P-Print devices, S-Stats");
     switch(key) {
         case 27: // ESC键退出
             LOG_INFO("ESC key pressed, exiting...");
@@ -216,6 +215,7 @@ void ImageReceiver::handleKeyPress(int key) {
             resetPerformanceStats();
             break;
         default:
+            // 其他按键忽略，推理和标定相关按键由 PerceptionSystem 处理
             break;
     }
     
@@ -391,12 +391,12 @@ void ImageReceiver::processFrameSet(std::shared_ptr<ob::FrameSet> frameset) {
         processFrameSetParallel(frameset);
     } else {
         // Use serial processing
-        std::unique_lock<std::mutex> lk(frameMutex_);
-        for(uint32_t i = 0; i < frameset->frameCount(); ++i) {
-            auto frame = frameset->getFrame(i);
+    std::unique_lock<std::mutex> lk(frameMutex_);
+    for(uint32_t i = 0; i < frameset->frameCount(); ++i) {
+        auto frame = frameset->getFrame(i);
             if(frame) {
-                frameMap_[frame->type()] = frame;
-                processFrame(frame);
+        frameMap_[frame->type()] = frame;
+        processFrame(frame);
             }
         }
     }
@@ -539,6 +539,15 @@ void ImageReceiver::processFrame(std::shared_ptr<ob::Frame> frame) {
             LOG_DEBUG("Saving frame, type: ", frameTypeStr, " (", static_cast<int>(frame->type()), ")", 
                       ", index: ", frame->index());
             frameHelper.saveFrame(frame, config.saveConfig.dumpPath);
+        }
+    }
+    
+    // 调用帧处理回调（通知 PerceptionSystem）
+    if (frameProcessCallback_) {
+        try {
+            frameProcessCallback_(frame, frame->type());
+        } catch (const std::exception& e) {
+            LOG_ERROR("Frame process callback failed: ", e.what());
         }
     }
 }
@@ -719,7 +728,7 @@ void ImageReceiver::printPerformanceStats() {
     }
     
     LOG_INFO("==============================");
-}
+    }
 
 void ImageReceiver::stop() {
     LOG_INFO("Stopping ImageReceiver...");
@@ -855,10 +864,10 @@ bool ImageReceiver::startStreaming() {
             streamState_ = StreamState::ERROR;
             return false;
         }
-        
-        // 启动管道
-        if (!startPipelines()) {
-            LOG_ERROR("Failed to start pipelines");
+    
+    // 启动管道
+    if (!startPipelines()) {
+        LOG_ERROR("Failed to start pipelines");
             streamState_ = StreamState::ERROR;
             return false;
         }
@@ -884,9 +893,9 @@ void ImageReceiver::stopStreaming() {
     }
     
     try {
-        // 停止管道
-        stopPipelines();
-        
+    // 停止管道
+    stopPipelines();
+    
         // 更新状态
         streamState_ = StreamState::IDLE;
         LOG_INFO("Streaming stopped successfully");
