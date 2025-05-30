@@ -10,8 +10,8 @@
 #include <thread>
 
 /**
- * @brief 日志管理器 - 单例模式
- * 提供统一的日志输出接口，支持不同级别的日志
+ * @brief Logger Manager - Singleton pattern
+ * Provides a unified logging interface with support for different log levels
  */
 class Logger {
 public:
@@ -102,6 +102,8 @@ private:
             logFile_ << message;
             logFile_.flush();
         } else {
+            // Direct use of std::cout is intentional here as this is the Logger implementation itself
+            // Using the logging macros here would cause infinite recursion
             std::cout << message;
         }
     }
@@ -111,7 +113,7 @@ private:
     std::mutex mutex_;
 };
 
-// 便捷宏定义
+// Convenience macros
 #define LOG_DEBUG(...) Logger::getInstance().debug(__VA_ARGS__)
 #define LOG_INFO(...) Logger::getInstance().info(__VA_ARGS__)
 #define LOG_WARN(...) Logger::getInstance().warn(__VA_ARGS__)

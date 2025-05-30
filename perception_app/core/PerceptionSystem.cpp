@@ -265,7 +265,7 @@ bool PerceptionSystem::setState(SystemState newState) {
         );
     }
     
-    LOG_INFO("发送状态报告: ", statusMessage);
+    LOG_INFO("Sending status report: ", statusMessage);
     
     return true;
 }
@@ -408,7 +408,7 @@ void PerceptionSystem::handleCommunicationMessage(const CommunicationProxy::Mess
 void PerceptionSystem::handleHeartBeatMessage(const CommunicationProxy::Message& message)
 {
     // 收到心跳消息，立即回复心跳响应
-    LOG_DEBUG("收到心跳请求: ", message.content);
+    LOG_DEBUG("Received heartbeat request: ", message.content);
     
     // 解析心跳请求，检查是否包含PING前缀
     std::string requestType = message.content;
@@ -424,7 +424,7 @@ void PerceptionSystem::handleHeartBeatMessage(const CommunicationProxy::Message&
     // 只响应PING开头的心跳请求
     if (requestType == "PING") {
         // 回复心跳请求，包含当前状态信息和原始请求数据
-        LOG_DEBUG("回复心跳请求: PING:", requestData, " -> PONG:", requestData, ":", getStateName(currentState_));
+        LOG_DEBUG("Replying to heartbeat request: PING:", requestData, " -> PONG:", requestData, ":", getStateName(currentState_));
         commProxy_.sendMessage(
             CommunicationProxy::MessageType::HEARTBEAT,
             "PONG:" + requestData + ":" + getStateName(currentState_)
@@ -439,23 +439,23 @@ void PerceptionSystem::handleConnectionStateChanged(CommunicationProxy::Connecti
     std::string stateStr;
     switch (newState) {
         case CommunicationProxy::ConnectionState::DISCONNECTED:
-            stateStr = "断开连接";
+            stateStr = "DISCONNECTED";
             break;
         case CommunicationProxy::ConnectionState::CONNECTING:
-            stateStr = "连接中";
+            stateStr = "CONNECTING";
             break;
         case CommunicationProxy::ConnectionState::CONNECTED:
-            stateStr = "已连接";
+            stateStr = "CONNECTED";
             break;
         default:
-            stateStr = "未知状态";
+            stateStr = "UNKNOWN_STATE";
     }
     
-    LOG_INFO("通信连接状态变化: ", stateStr, " (", static_cast<int>(newState), ")");
+    LOG_INFO("Communication connection state changed: ", stateStr, " (", static_cast<int>(newState), ")");
     
     // 当连接建立时，主动发送当前状态
     if (newState == CommunicationProxy::ConnectionState::CONNECTED) {
-        LOG_INFO("通信连接已建立，发送当前状态...");
+        LOG_INFO("Communication connection established, sending current state...");
     }
 } 
 

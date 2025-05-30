@@ -1,4 +1,5 @@
 #include "MetadataHelper.hpp"
+#include "Logger.hpp"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -11,18 +12,20 @@ MetadataHelper& MetadataHelper::getInstance() {
 void MetadataHelper::printMetadata(std::shared_ptr<ob::Frame> frame, int interval) {
     if(!frame) return;
 
-    std::cout << "\nFrame " << frame->index() << " metadata (every " << interval << " frames):" << std::endl;
-    std::cout << "----------------------------------------" << std::endl;
-    std::cout << "Frame Type: " << frameTypeToString(frame->type()) << std::endl;
+    LOG_INFO("Frame ", frame->index(), " metadata (every ", interval, " frames):");
+    LOG_INFO("----------------------------------------");
+    LOG_INFO("Frame Type: ", ob::TypeHelper::convertOBFrameTypeToString(frame->type()));
     
     for(uint32_t i = 0; i < static_cast<uint32_t>(OB_FRAME_METADATA_TYPE_COUNT); i++) {
         auto type = static_cast<OBFrameMetadataType>(i);
         if(frame->hasMetadata(type)) {
-            std::cout << "metadata type: " << std::left << std::setw(50) << metadataTypeToString(type)
-                      << " metadata value: " << frame->getMetadataValue(type) << std::endl;
+            // Creating a formatted string for consistent spacing
+            std::stringstream ss;
+            ss << std::left << std::setw(50) << metadataTypeToString(type);
+            LOG_INFO("metadata type: ", ss.str(), " metadata value: ", frame->getMetadataValue(type));
         }
     }
-    std::cout << "----------------------------------------" << std::endl;
+    LOG_INFO("----------------------------------------");
 }
 
 
@@ -63,20 +66,5 @@ std::string MetadataHelper::metadataTypeToString(OBFrameMetadataType type) {
         case OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_OFFSET: return "Disparity Search Offset";
         case OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE: return "Disparity Search Range";
         default: return "Unknown Metadata Type";
-    }
-}
-
-const char *MetadataHelper::frameTypeToString(OBFrameType type) {
-    switch(type) {
-    case OB_FRAME_VIDEO: return "OB_FRAME_VIDEO";
-    case OB_FRAME_COLOR: return "OB_FRAME_COLOR";
-    case OB_FRAME_DEPTH: return "OB_FRAME_DEPTH";
-    case OB_FRAME_IR: return "OB_FRAME_IR";
-    case OB_FRAME_IR_LEFT: return "OB_FRAME_IR_LEFT";
-    case OB_FRAME_IR_RIGHT: return "OB_FRAME_IR_RIGHT";
-    case OB_FRAME_ACCEL: return "OB_FRAME_ACCEL";
-    case OB_FRAME_GYRO: return "OB_FRAME_GYRO";
-    default:
-        return "unknown frame type";
     }
 }

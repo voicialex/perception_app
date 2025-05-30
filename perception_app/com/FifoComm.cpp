@@ -8,11 +8,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-// FifoCommImpl实现
+// FifoCommImpl implementation
 FifoCommImpl::FifoCommImpl(const std::string& basePath, CommRole role)
     : basePath_(basePath), inPipePath_(basePath_ + "_in"), outPipePath_(basePath_ + "_out"),
       isServer_(false), role_(role), readFd_(-1), writeFd_(-1) {
-    // 设置管道路径已在初始化列表中完成
+    // Pipe path setup completed in initialization list
 }
 
 FifoCommImpl::~FifoCommImpl() {
@@ -27,51 +27,51 @@ bool FifoCommImpl::initialize(CommRole role) {
     if (role == CommRole::SERVER) {
         if (initializeAsServer()) {
             isServer_ = true;
-            LOG_INFO("FIFO通信初始化成功 (服务端模式)");
+            LOG_INFO("FIFO communication initialized successfully (server mode)");
             return true;
         }
-        LOG_ERROR("FIFO通信初始化失败，无法作为服务端初始化");
+        LOG_ERROR("FIFO communication initialization failed, cannot initialize as server");
         return false;
     } else if (role == CommRole::CLIENT) {
         if (initializeAsClient()) {
             isServer_ = false;
-            LOG_INFO("FIFO通信初始化成功 (客户端模式)");
+            LOG_INFO("FIFO communication initialized successfully (client mode)");
             return true;
         }
-        LOG_ERROR("FIFO通信初始化失败，无法作为客户端初始化");
+        LOG_ERROR("FIFO communication initialization failed, cannot initialize as client");
         return false;
     } else {
-        // AUTO 兼容原有逻辑
+        // AUTO is compatible with existing logic
         if (initializeAsServer()) {
             isServer_ = true;
-            LOG_INFO("FIFO通信初始化成功 (服务端模式)");
+            LOG_INFO("FIFO communication initialized successfully (server mode)");
             return true;
         }
         if (initializeAsClient()) {
             isServer_ = false;
-            LOG_INFO("FIFO通信初始化成功 (客户端模式)");
+            LOG_INFO("FIFO communication initialized successfully (client mode)");
             return true;
         }
-        LOG_ERROR("FIFO通信初始化失败，无法作为服务端或客户端初始化");
+        LOG_ERROR("FIFO communication initialization failed, cannot initialize as server or client");
         return false;
     }
 }
 
 bool FifoCommImpl::initializeAsServer() {
-    LOG_INFO("尝试以服务端模式初始化...");
+    LOG_INFO("Attempting to initialize as server...");
     
-    // 设置服务端标志
+    // Set server flag
     isServer_ = true;
     
-    // 创建管道
+    // Create pipes
     if (!createPipes()) {
-        LOG_ERROR("创建管道失败");
+        LOG_ERROR("Failed to create pipes");
         return false;
     }
     
-    // 打开管道
+    // Open pipes
     if (!openPipesWithRetry()) {
-        LOG_ERROR("打开管道失败，超过最大重试次数");
+        LOG_ERROR("Failed to open pipes, maximum retry count exceeded");
         return false;
     }
     
@@ -79,20 +79,20 @@ bool FifoCommImpl::initializeAsServer() {
 }
 
 bool FifoCommImpl::initializeAsClient() {
-    LOG_INFO("尝试以客户端模式初始化...");
+    LOG_INFO("Attempting to initialize as client...");
     
-    // 设置客户端标志
+    // Set client flag
     isServer_ = false;
     
-    // 检查管道是否存在
+    // Check if pipes exist
     if (!checkPipesExist()) {
-        LOG_ERROR("管道文件不存在，请确保服务端已启动");
+        LOG_ERROR("Pipe files do not exist, please ensure server is running");
         return false;
     }
     
-    // 打开管道（添加重试机制）
+    // Open pipes (with retry mechanism)
     if (!openPipesWithRetry()) {
-        LOG_ERROR("打开管道失败，超过最大重试次数");
+        LOG_ERROR("Failed to open pipes, maximum retry count exceeded");
         return false;
     }
     
@@ -102,21 +102,21 @@ bool FifoCommImpl::initializeAsClient() {
 bool FifoCommImpl::checkPipesExist() {
     struct stat st;
     
-    // 检查入站管道
+    // Check inbound pipe
     if (stat(inPipePath_.c_str(), &st) != 0) {
-        LOG_WARN("入站管道不存在: ", inPipePath_);
+        LOG_WARN("Inbound pipe does not exist: ", inPipePath_);
         return false;
     } else if (!S_ISFIFO(st.st_mode)) {
-        LOG_ERROR("入站管道路径存在但不是管道: ", inPipePath_);
+        LOG_ERROR("Inbound pipe path exists but is not a pipe: ", inPipePath_);
         return false;
     }
     
-    // 检查出站管道
+    // Check outbound pipe
     if (stat(outPipePath_.c_str(), &st) != 0) {
-        LOG_WARN("出站管道不存在: ", outPipePath_);
+        LOG_WARN("Outbound pipe does not exist: ", outPipePath_);
         return false;
     } else if (!S_ISFIFO(st.st_mode)) {
-        LOG_ERROR("出站管道路径存在但不是管道: ", outPipePath_);
+        LOG_ERROR("Outbound pipe path exists but is not a pipe: ", outPipePath_);
         return false;
     }
     
@@ -124,117 +124,117 @@ bool FifoCommImpl::checkPipesExist() {
 }
 
 bool FifoCommImpl::createPipes() {
-    // 确保目录存在
+    // Ensure directory exists
     std::string dirPath = basePath_.substr(0, basePath_.find_last_of('/'));
     if (!dirPath.empty()) {
         struct stat st;
         if (stat(dirPath.c_str(), &st) != 0) {
-            // 目录不存在，尝试创建
-            LOG_INFO("尝试创建目录: ", dirPath);
+            // Directory doesn't exist, try to create it
+            LOG_INFO("Attempting to create directory: ", dirPath);
             if (mkdir(dirPath.c_str(), 0777) != 0) {
-                LOG_ERROR("创建目录失败: ", strerror(errno));
+                LOG_ERROR("Failed to create directory: ", strerror(errno));
                 return false;
             }
         }
     }
     
-    // 删除可能存在的旧管道
+    // Delete old pipes if they exist
     unlink(inPipePath_.c_str());
     unlink(outPipePath_.c_str());
     
-    // 创建入站管道
+    // Create inbound pipe
     if (mkfifo(inPipePath_.c_str(), 0666) == -1) {
         if (errno != EEXIST) {
-            LOG_ERROR("创建入站管道失败: ", strerror(errno));
+            LOG_ERROR("Failed to create inbound pipe: ", strerror(errno));
             return false;
         }
     }
     
-    // 创建出站管道
+    // Create outbound pipe
     if (mkfifo(outPipePath_.c_str(), 0666) == -1) {
         if (errno != EEXIST) {
-            LOG_ERROR("创建出站管道失败: ", strerror(errno));
+            LOG_ERROR("Failed to create outbound pipe: ", strerror(errno));
             unlink(inPipePath_.c_str());
             return false;
         }
     }
     
-    // 修改权限确保所有用户可读写
+    // Modify permissions to ensure all users can read/write
     chmod(inPipePath_.c_str(), 0666);
     chmod(outPipePath_.c_str(), 0666);
     
-    LOG_INFO("创建管道成功");
+    LOG_INFO("Pipes created successfully");
     return true;
 }
 
 bool FifoCommImpl::openPipes() {
     if (isServer_) {
-        // 服务端模式 - 修改管道打开顺序，先阻塞打开入站管道，再打开出站管道
-        LOG_INFO("服务端: 阻塞打开入站管道");
-        // 使用阻塞模式，等待客户端连接
+        // Server mode - modified pipe opening order: first open inbound pipe in blocking mode, then outbound pipe
+        LOG_INFO("Server: Opening inbound pipe in blocking mode");
+        // Use blocking mode to wait for client connection
         readFd_ = open(inPipePath_.c_str(), O_RDONLY);
         if (readFd_ == -1) {
-            LOG_ERROR("服务端: 打开入站管道失败: ", strerror(errno));
+            LOG_ERROR("Server: Failed to open inbound pipe: ", strerror(errno));
             return false;
         }
         
-        // 设置非阻塞模式
+        // Set non-blocking mode
         int flags = fcntl(readFd_, F_GETFL, 0);
         fcntl(readFd_, F_SETFL, flags | O_NONBLOCK);
         
-        LOG_INFO("服务端: 打开出站管道");
+        LOG_INFO("Server: Opening outbound pipe");
         writeFd_ = open(outPipePath_.c_str(), O_WRONLY | O_NONBLOCK);
         if (writeFd_ == -1) {
-            LOG_ERROR("服务端: 打开出站管道失败: ", strerror(errno));
+            LOG_ERROR("Server: Failed to open outbound pipe: ", strerror(errno));
             close(readFd_);
             readFd_ = -1;
             return false;
         }
     } else {
-        // 客户端模式 - 修改管道打开顺序，先阻塞打开出站管道，再打开入站管道
-        LOG_INFO("客户端: 阻塞打开出站管道");
-        // 使用阻塞模式，等待服务端连接
-        writeFd_ = open(inPipePath_.c_str(), O_WRONLY); // 客户端的出站是服务端的入站
+        // Client mode - modified pipe opening order: first open outbound pipe in blocking mode, then inbound pipe
+        LOG_INFO("Client: Opening outbound pipe in blocking mode");
+        // Use blocking mode to wait for server connection
+        writeFd_ = open(inPipePath_.c_str(), O_WRONLY); // Client's outbound is server's inbound
         if (writeFd_ == -1) {
-            LOG_ERROR("客户端: 打开出站管道失败: ", strerror(errno));
+            LOG_ERROR("Client: Failed to open outbound pipe: ", strerror(errno));
             return false;
         }
         
-        LOG_INFO("客户端: 打开入站管道");
-        readFd_ = open(outPipePath_.c_str(), O_RDONLY | O_NONBLOCK); // 客户端的入站是服务端的出站
+        LOG_INFO("Client: Opening inbound pipe");
+        readFd_ = open(outPipePath_.c_str(), O_RDONLY | O_NONBLOCK); // Client's inbound is server's outbound
         if (readFd_ == -1) {
-            LOG_ERROR("客户端: 打开入站管道失败: ", strerror(errno));
+            LOG_ERROR("Client: Failed to open inbound pipe: ", strerror(errno));
             close(writeFd_);
             writeFd_ = -1;
             return false;
         }
     }
     
-    LOG_INFO("打开管道成功");
-    // 通知成功建立连接
+    LOG_INFO("Pipes opened successfully");
+    // Notify successful connection
     isConnected_ = true;
     return true;
 }
 
 bool FifoCommImpl::openPipesWithRetry() {
-    const int MAX_RETRIES = 5; // 减少重试次数
-    const int RETRY_DELAY_MS = 1000; // 减少重试延迟
+    const int MAX_RETRIES = 5; // Reduced retry count
+    const int RETRY_DELAY_MS = 1000; // Reduced retry delay
     
     for (int retry = 0; retry < MAX_RETRIES; retry++) {
         if (retry > 0) {
-            LOG_INFO("尝试第 ", retry, " 次打开管道...");
+            LOG_INFO("Attempting to open pipes, retry #", retry);
             std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_DELAY_MS));
         }
         
-        // 尝试打开管道
+        // Try to open pipes
         if (openPipes()) {
             if (retry > 0) {
-                LOG_INFO("在第 ", retry + 1, " 次尝试后成功打开管道");
+                LOG_INFO("Successfully opened pipes after ", retry + 1, " attempts");
             }
             return true;
         }
         
-        // 关闭之前可能部分打开的文件描述符
+        // Close previously partially opened file descriptors
         if (readFd_ != -1) {
             close(readFd_);
             readFd_ = -1;
@@ -250,7 +250,7 @@ bool FifoCommImpl::openPipesWithRetry() {
 }
 
 void FifoCommImpl::cleanup() {
-    // 关闭文件描述符
+    // Close file descriptors
     if (readFd_ != -1) {
         close(readFd_);
         readFd_ = -1;
@@ -261,39 +261,39 @@ void FifoCommImpl::cleanup() {
         writeFd_ = -1;
     }
     
-    // 如果是服务端，删除管道文件
+    // If server, delete pipe files
     if (isServer_) {
-        LOG_INFO("服务端：删除管道文件");
+        LOG_INFO("Server: Deleting pipe files");
         unlink(inPipePath_.c_str());
         unlink(outPipePath_.c_str());
     }
     
-    // 更新连接状态
+    // Update connection status
     isConnected_ = false;
     
-    LOG_INFO("清理管道完成");
+    LOG_INFO("Pipe cleanup completed");
 }
 
 bool FifoCommImpl::sendMessage(const std::string& message) {
     if (writeFd_ == -1) {
-        LOG_ERROR("无法发送消息: 写管道未打开");
+        LOG_ERROR("Cannot send message: Write pipe not opened");
         return false;
     }
     
-    std::string data = message + "\n";  // 添加分隔符方便接收端解析
+    std::string data = message + "\n";  // Add separator for easier parsing by receiver
     
-    // 发送消息
+    // Send message
     ssize_t bytesWritten = write(writeFd_, data.c_str(), data.size());
     if (bytesWritten != static_cast<ssize_t>(data.size())) {
         if (bytesWritten == -1) {
-            LOG_ERROR("写入管道失败: ", strerror(errno));
+            LOG_ERROR("Failed to write to pipe: ", strerror(errno));
             
-            // 检查是否因为管道断开
+            // Check if due to pipe disconnection
             if (errno == EPIPE) {
-                LOG_ERROR("管道已断开，接收端可能已关闭");
+                LOG_ERROR("Pipe disconnected, receiver may have closed");
             }
         } else {
-            LOG_ERROR("写入管道不完整: ", bytesWritten, "/", data.size());
+            LOG_ERROR("Incomplete write to pipe: ", bytesWritten, "/", data.size());
         }
         return false;
     }
@@ -303,58 +303,58 @@ bool FifoCommImpl::sendMessage(const std::string& message) {
 
 bool FifoCommImpl::receiveMessage(std::string& message) {
     if (readFd_ == -1) {
-        LOG_ERROR("无法接收消息: 读管道未打开");
+        LOG_ERROR("Cannot receive message: Read pipe not opened");
         return false;
     }
     
-    // 检查是否有足够的数据可以处理
+    // Check if there is enough data to process
     if (!partialData_.empty()) {
-        // 查找一条完整消息
+        // Find a complete message
         size_t pos = partialData_.find('\n');
         if (pos != std::string::npos) {
-            // 提取一条完整消息
+            // Extract a complete message
             message = partialData_.substr(0, pos);
             partialData_ = partialData_.substr(pos + 1);
             
-            // 如果缓冲区中还有大量数据未处理，记录日志
+            // If there is still a lot of data left to process, log it
             if (partialData_.size() > 200) {
-                LOG_WARN("FIFO接收缓冲区有大量数据待处理: ", partialData_.size(), " 字节");
+                LOG_WARN("FIFO receive buffer has a lot of data to process: ", partialData_.size(), " bytes");
             }
             
             return true;
         }
     }
     
-    // 从管道读取数据
+    // Read data from pipe
     char buffer[4096];
     ssize_t bytesRead = read(readFd_, buffer, sizeof(buffer) - 1);
     
     if (bytesRead > 0) {
-        // 确保字符串结束
+        // Ensure string ends
         buffer[bytesRead] = '\0';
         
-        // 添加到部分数据中
+        // Add to partial data
         partialData_ += buffer;
         
-        // 循环提取所有完整消息，直到找不到完整消息为止
+        // Loop to extract all complete messages until no complete message is found
         size_t pos = partialData_.find('\n');
         if (pos != std::string::npos) {
-            // 提取一条完整消息
+            // Extract a complete message
             message = partialData_.substr(0, pos);
             partialData_ = partialData_.substr(pos + 1);
             
-            // 记录剩余待处理数据量
+            // Record remaining data to process
             if (!partialData_.empty()) {
-                LOG_DEBUG("FIFO接收处理完一条消息后，缓冲区还有 ", partialData_.size(), " 字节数据待处理");
+                LOG_DEBUG("FIFO receive processed one message, ", partialData_.size(), " bytes of data left to process");
             }
             
             return true;
         }
     }
     else if (bytesRead == -1) {
-        // 非阻塞模式下，无数据可读会返回-1和EAGAIN
+        // In non-blocking mode, no data to read returns -1 and EAGAIN
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            LOG_ERROR("读取管道失败: ", strerror(errno));
+            LOG_ERROR("Read from pipe failed: ", strerror(errno));
         }
     }
     
@@ -362,7 +362,7 @@ bool FifoCommImpl::receiveMessage(std::string& message) {
 }
 
 void FifoCommImpl::setReceiveTimeout(int milliseconds) {
-    // FIFO实现不需要超时设置，使用非阻塞模式
+    // FIFO implementation does not support timeout setting, use non-blocking mode
     (void)milliseconds;
 }
 

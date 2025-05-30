@@ -67,7 +67,7 @@ public:
      * @return 是否成功启动
      */
     bool startStreaming();
-    
+
     /**
      * @brief 停止流处理
      */
@@ -157,6 +157,7 @@ private:
     // 性能统计
     void updatePerformanceStats();
     void printPerformanceStats();
+    void resetPerformanceStats();
     
     // 无信号画面
     void createNoSignalFrame();
@@ -203,6 +204,14 @@ private:
         std::chrono::steady_clock::time_point lastStatsTime;
         double currentFPS{0.0};
         double averageFPS{0.0};
+        
+        // 帧处理时间统计
+        std::atomic<uint64_t> totalProcessingTime{0};  // 总处理时间(毫秒)
+        std::atomic<uint64_t> processedFramesCount{0}; // 统计处理时间的帧数
+        std::atomic<double> currentProcessingTime{0.0}; // 当前帧处理时间(毫秒)
+        double minProcessingTime{std::numeric_limits<double>::max()}; // 最小处理时间(毫秒)
+        double maxProcessingTime{0.0};                 // 最大处理时间(毫秒)
+        double avgProcessingTime{0.0};                 // 平均处理时间(毫秒)
     } performanceStats_;
 
     // 热插拔状态

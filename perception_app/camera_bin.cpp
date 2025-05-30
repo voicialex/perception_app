@@ -10,87 +10,88 @@
 #include "ConfigHelper.hpp"
 #include "Logger.hpp"
 
-// 全局变量用于信号处理
+// Global variables for signal handling
 std::atomic<bool> g_exitRequested{false};
 std::unique_ptr<ImageReceiver> g_imageReceiver;
 
 /**
- * @brief 信号处理函数
+ * @brief Signal handler function
  */
 void signalHandler(int signal) {
-    std::cout << "捕获信号: " << signal << std::endl;
+    LOG_INFO("Signal caught: ", signal);
     g_exitRequested = true;
     
     if (g_imageReceiver) {
         g_imageReceiver->stop();
     }
     
-    // 使用更优雅的退出方式
+    // Use a more graceful exit approach
     static std::atomic<bool> forceExitInProgress{false};
     
     if (!forceExitInProgress) {
         forceExitInProgress = true;
         std::thread([signal]() {
-            // 等待一小段时间让程序正常退出
+            // Wait a short time for normal program exit
             std::this_thread::sleep_for(std::chrono::milliseconds(800));
             if (g_exitRequested) {
-                std::cerr << "程序未能及时退出，强制退出" << std::endl;
-                _exit(signal); // 使用 _exit 而不是 std::exit 避免析构函数阻塞
+                LOG_ERROR("Program did not exit in time, forcing exit");
+                _exit(signal); // Use _exit instead of std::exit to avoid blocking in destructors
             }
         }).detach();
     }
 }
 
 /**
- * @brief 确保目录存在，如不存在则创建
- * @param dirPath 目录路径
- * @return 是否成功创建或已存在
+ * @brief Ensure directory exists, create if not
+ * @param dirPath Directory path
+ * @return Whether creation was successful or directory already exists
  */
 bool ensureDirectoryExists(const std::string& dirPath) {
     try {
         if (dirPath.empty()) {
-            std::cerr << "目录路径为空!" << std::endl;
+            LOG_ERROR("Directory path is empty!");
             return false;
         }
         
-        // 检查目录是否存在，不存在则创建
+        // Check if directory exists, create if not
         if (!std::filesystem::exists(dirPath)) {
-            std::cout << "创建目录: " << dirPath << std::endl;
+            LOG_INFO("Creating directory: ", dirPath);
             return std::filesystem::create_directories(dirPath);
         }
         
-        // 检查是否为目录
+        // Check if it's a directory
         if (!std::filesystem::is_directory(dirPath)) {
-            std::cerr << "路径存在但不是目录: " << dirPath << std::endl;
+            LOG_ERROR("Path exists but is not a directory: ", dirPath);
             return false;
         }
         
         return true;
     } catch (const std::exception& e) {
-        std::cerr << "创建目录时出错: " << e.what() << std::endl;
+        LOG_ERROR("Error creating directory: ", e.what());
         return false;
     }
 }
 
 int main() {
     try {
-        // 设置信号处理
+        // Set up signal handling
         std::signal(SIGINT, signalHandler);
         std::signal(SIGTERM, signalHandler);
 
-        std::cout << "=== Orbbec 相机启动程序 ===" << std::endl;
-        std::cout << "正在启动..." << std::endl;
-        
-        // 设置日志级别为 DEBUG 以获取更多信息
+        // Set log level to DEBUG for more information
         Logger::getInstance().setLevel("DEBUG");
         
-        // 获取配置并修改关键参数
+        LOG_INFO("=== Orbbec Camera Launcher ===");
+        LOG_INFO("Starting up...");
+        
+        // Get configuration and modify key parameters
         auto& config = ConfigHelper::getInstance();
         
-        // 修改配置以确保基本流打开并启用调试输出
-        std::cout << "配置相机参数..." << std::endl;
+        // Modify configuration to ensure basic streams are open and debug output is enabled
+        LOG_INFO("Configuring camera parameters...");
         config.streamConfig.enableColor = true;
         config.streamConfig.enableDepth = true;
+        config.streamConfig.enableIR = true;      // 启用红外流
         config.renderConfig.enableRendering = true;
         config.renderConfig.showFPS = true;
         config.hotPlugConfig.enableHotPlug = true;
@@ -99,65 +100,65 @@ int main() {
         config.debugConfig.enableDebugOutput = true;
         config.debugConfig.enablePerformanceStats = true;
         
-        // 设置数据保存配置
-
+        // Set data saving configuration
         config.saveConfig.enableDump = true;
-        config.saveConfig.dumpPath = "./dumps/";  // 使用当前目录下的dumps子目录
-        config.saveConfig.saveColor = true;        // 保存彩色图像
-        config.saveConfig.saveDepth = true;        // 保存深度图像
-        config.saveConfig.imageFormat = "png";     // 使用PNG格式
-        config.saveConfig.maxFramesToSave = 10000; // 最大保存1万帧
+        config.saveConfig.dumpPath = "./dumps/";  // Use dumps subdirectory in current directory
+        config.saveConfig.saveColor = true;       // Save color images
+        config.saveConfig.saveDepth = true;       // Save depth images
+        config.saveConfig.saveIR = true;          // Save IR images
+        config.saveConfig.imageFormat = "png";    // Use PNG format
+        config.saveConfig.maxFramesToSave = 1000; // Maximum save 10,000 frames
         
-        // 确保保存路径存在
+        // Ensure save path exists
         if (!ensureDirectoryExists(config.saveConfig.dumpPath)) {
-            std::cerr << "无法创建数据保存目录，将使用当前目录" << std::endl;
+            LOG_ERROR("Cannot create data save directory, will use current directory");
             config.saveConfig.dumpPath = "./";
         }
         
         if (!config.validateAll()) {
-            std::cerr << "配置验证失败!" << std::endl;
+            LOG_ERROR("Configuration validation failed!");
             return -1;
         }
         
-        // 打印当前配置
+        // Print current configuration
         config.printConfig();
         
-        std::cout << "等待设备连接..." << std::endl;
+        LOG_INFO("Waiting for device connection...");
         
-        // 创建并初始化图像接收器
+        // Create and initialize image receiver
         g_imageReceiver = std::make_unique<ImageReceiver>();
         if (!g_imageReceiver->initialize()) {
-            std::cerr << "无法初始化图像接收器" << std::endl;
+            LOG_ERROR("Cannot initialize image receiver");
             return -1;
         }
         
-        std::cout << "相机初始化成功，开始运行..." << std::endl;
+        LOG_INFO("Camera initialized successfully, starting operation...");
         
-        // 使用新的简化接口直接启动流处理
-        std::cout << "启动视频流处理..." << std::endl;
+        // Use new simplified interface to directly start stream processing
+        LOG_INFO("Starting video stream processing...");
         if (!g_imageReceiver->startStreaming()) {
-            std::cout << "启动视频流失败，将依赖热插拔机制，等待2秒..." << std::endl;
+            LOG_INFO("Failed to start video stream, will rely on hot-plug mechanism, waiting 2 seconds...");
             std::this_thread::sleep_for(std::chrono::seconds(2));
         } else {
-            std::cout << "视频流启动成功!" << std::endl;
+            LOG_INFO("Video stream started successfully!");
         }
         
-        // 运行主循环
-        std::cout << "启动主循环..." << std::endl;
+        // Run main loop
+        LOG_INFO("Starting main loop...");
         g_imageReceiver->run();
         
-        // 如果正常退出，重置退出标志
+        // If normal exit, reset exit flag
         g_exitRequested = false;
         
-        std::cout << "程序正常退出" << std::endl;
+        LOG_INFO("Program exited normally");
         return 0;
     }
     catch (const std::exception& e) {
-        std::cerr << "程序错误: " << e.what() << std::endl;
+        LOG_ERROR("Program error: ", e.what());
         return -1;
     }
     catch (...) {
-        std::cerr << "发生未知错误" << std::endl;
+        LOG_ERROR("Unknown error occurred");
         return -1;
     }
 } 

@@ -18,6 +18,13 @@ private:
     DumpHelper(const DumpHelper&) = delete;
     DumpHelper& operator=(const DumpHelper&) = delete;
 
+    // 通用图像帧保存方法 - 处理所有类型的图像帧
+    bool saveImageFrame(const std::shared_ptr<ob::VideoFrame> videoFrame, 
+                       const std::string& path, 
+                       const std::string& timeStamp,
+                       const std::string& frameTypeName,
+                       int cvMatType);
+
     // 保存深度帧
     void saveDepthFrame(const std::shared_ptr<ob::DepthFrame> depthFrame, 
                        const std::string& path, const std::string& timeStamp);
@@ -26,15 +33,22 @@ private:
     void saveColorFrame(std::shared_ptr<ob::ColorFrame> colorFrame, 
                        const std::string& path, const std::string& timeStamp);
     
+    // 保存IR帧
+    void saveIRFrame(std::shared_ptr<ob::Frame> irFrame, 
+                     const std::string& path, const std::string& timeStamp);
+    
     // 保存IMU帧
     void saveIMUFrame(const std::shared_ptr<ob::Frame> frame, 
                      const std::string& path, const std::string& timeStamp);
-
-    // 检查是否为视频帧
-    bool isVideoFrame(OBFrameType type);
     
-    // 检查是否为IMU帧
-    bool isIMUFrame(OBFrameType type);
+    // 创建文件路径
+    std::string createFilePath(const std::string& path, 
+                              const std::string& timeStamp, 
+                              const std::string& frameTypeName,
+                              const std::string& extension = ".png");
+    
+    // 创建 PNG 保存参数
+    std::vector<int> createPNGParams();
     
     // 生成统一的时间戳字符串
     std::string generateTimeStamp();

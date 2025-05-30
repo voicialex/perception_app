@@ -5,6 +5,7 @@
 #include <fstream>
 #include <map>
 #include <filesystem>
+#include "Logger.hpp"
 
 /**
  * @brief 配置管理器 - 单例模式
@@ -21,9 +22,9 @@ public:
     struct StreamConfig {
         bool enableColor = true;             // 启用彩色流
         bool enableDepth = true;             // 启用深度流
-        bool enableIR = false;               // 启用红外流
-        bool enableIRLeft = false;           // 启用左红外流
-        bool enableIRRight = false;          // 启用右红外流
+        bool enableIR = true;               // 启用红外流
+        bool enableIRLeft = true;           // 启用左红外流
+        bool enableIRRight = true;          // 启用右红外流
         bool enableIMU = false;              // 启用IMU数据流
         
         // 流质量配置
@@ -61,10 +62,11 @@ public:
         std::string dumpPath = "./dumps/";   // 保存路径
         bool saveColor = true;               // 保存彩色图像
         bool saveDepth = true;               // 保存深度图像
+        bool saveIR = true;                  // 保存红外图像
         bool savePointCloud = false;         // 保存点云数据
         std::string imageFormat = "png";     // 图像格式
         int maxFramesToSave = 1000;          // 最大保存帧数
-        int frameInterval = 10;              // 保存帧间隔（每N帧保存一帧，值越大保存频率越低）
+        int frameInterval = 100;              // 保存帧间隔（每N帧保存一帧，值越大保存频率越低）
         
         bool validate() const {
             return !dumpPath.empty() && maxFramesToSave > 0 &&
@@ -136,7 +138,7 @@ public:
     static std::string ensureDirectoryExists(const std::string& path, bool addTrailingSlash = true) {
         try {
             if(path.empty()) {
-                std::cerr << "路径为空" << std::endl;
+                LOG_ERROR("Path is empty");
                 return "";
             }
             
@@ -151,9 +153,9 @@ public:
             // 创建目录（如果不存在）
             if(!std::filesystem::exists(normPath)) {
                 if(std::filesystem::create_directories(normPath)) {
-                    std::cout << "已创建目录: " << normPath << std::endl;
+                    LOG_INFO("Directory created: ", normPath);
                 } else {
-                    std::cerr << "创建目录失败: " << normPath << std::endl;
+                    LOG_ERROR("Failed to create directory: ", normPath);
                     return "";
                 }
             }
@@ -161,7 +163,7 @@ public:
             return normPath;
         }
         catch(const std::exception& e) {
-            std::cerr << "处理目录时发生错误: " << e.what() << std::endl;
+            LOG_ERROR("Error processing directory: ", e.what());
             return "";
         }
     }
@@ -197,21 +199,29 @@ public:
      * @brief 打印当前配置
      */
     void printConfig() const {
-        std::cout << "\n=== Current Configuration ===" << std::endl;
-        std::cout << "Stream: Color=" << streamConfig.enableColor 
-                  << ", Depth=" << streamConfig.enableDepth 
-                  << ", IMU=" << streamConfig.enableIMU << std::endl;
-        std::cout << "Render: " << renderConfig.windowWidth << "x" << renderConfig.windowHeight 
-                  << ", Title=" << renderConfig.windowTitle << std::endl;
-        std::cout << "HotPlug: Enabled=" << hotPlugConfig.enableHotPlug 
-                  << ", AutoReconnect=" << hotPlugConfig.autoReconnect 
-                  << ", MaxAttempts=" << hotPlugConfig.maxReconnectAttempts << std::endl;
-        std::cout << "Debug: Level=" << debugConfig.logLevel 
-                  << ", Performance=" << debugConfig.enablePerformanceStats << std::endl;
-        std::cout << "Parallel: Enabled=" << parallelConfig.enableParallelProcessing 
-                  << ", ThreadPoolSize=" << parallelConfig.threadPoolSize 
-                  << ", MaxQueuedTasks=" << parallelConfig.maxQueuedTasks << std::endl;
-        std::cout << "============================\n" << std::endl;
+        LOG_INFO("=== Current Configuration ===");
+        LOG_INFO("Stream: Color=", streamConfig.enableColor, 
+                 ", Depth=", streamConfig.enableDepth, 
+                 ", IR=", streamConfig.enableIR,
+                 ", IR_Left=", streamConfig.enableIRLeft,
+                 ", IR_Right=", streamConfig.enableIRRight,
+                 ", IMU=", streamConfig.enableIMU);
+        LOG_INFO("Render: ", renderConfig.windowWidth, "x", renderConfig.windowHeight, 
+                 ", Title=", renderConfig.windowTitle);
+        LOG_INFO("Save: Enabled=", saveConfig.enableDump,
+                 ", Color=", saveConfig.saveColor,
+                 ", Depth=", saveConfig.saveDepth,
+                 ", IR=", saveConfig.saveIR,
+                 ", Interval=", saveConfig.frameInterval);
+        LOG_INFO("HotPlug: Enabled=", hotPlugConfig.enableHotPlug, 
+                 ", AutoReconnect=", hotPlugConfig.autoReconnect, 
+                 ", MaxAttempts=", hotPlugConfig.maxReconnectAttempts);
+        LOG_INFO("Debug: Level=", debugConfig.logLevel, 
+                 ", Performance=", debugConfig.enablePerformanceStats);
+        LOG_INFO("Parallel: Enabled=", parallelConfig.enableParallelProcessing, 
+                 ", ThreadPoolSize=", parallelConfig.threadPoolSize, 
+                 ", MaxQueuedTasks=", parallelConfig.maxQueuedTasks);
+        LOG_INFO("============================");
     }
 
     /**
@@ -231,7 +241,7 @@ private:
     ConfigHelper() {
         // 构造函数中可以进行额外的初始化
         if(!validateAll()) {
-            std::cerr << "Warning: Default configuration validation failed!" << std::endl;
+            LOG_WARN("Warning: Default configuration validation failed!");
         }
     }
     

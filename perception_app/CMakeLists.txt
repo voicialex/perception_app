@@ -48,7 +48,7 @@ add_executable(perception_app main.cpp)
 target_link_libraries(perception_app PRIVATE
     perception::core
     perception::com
-    ob::examples::utils
+    perception::utils
     ob::OrbbecSDK
 )
 
@@ -64,7 +64,7 @@ add_executable(camera_bin camera_bin.cpp)
 target_link_libraries(camera_bin PRIVATE
     perception::core
     perception::com
-    ob::examples::utils
+    perception::utils
     ob::OrbbecSDK
 )
 
@@ -79,7 +79,7 @@ add_executable(state_tester StateControlTester.cpp)
 # 链接库
 target_link_libraries(state_tester PRIVATE
     perception::com
-    ob::examples::utils
+    perception::utils
     ob::OrbbecSDK
 )
 

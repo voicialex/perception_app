@@ -18,7 +18,6 @@ public:
 
 private:
     std::string metadataTypeToString(OBFrameMetadataType type);
-    const char *frameTypeToString(OBFrameType type);
 
 private:
     MetadataHelper() = default;

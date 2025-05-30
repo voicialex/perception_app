@@ -10,17 +10,17 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-// 线程池的默认线程数量
+// Default thread pool size
 constexpr size_t DEFAULT_THREAD_POOL_SIZE = 3;
 
-// CommunicationProxy 实现
+// CommunicationProxy implementation
 CommunicationProxy& CommunicationProxy::getInstance() {
     static CommunicationProxy instance;
     return instance;
 }
 
 CommunicationProxy::CommunicationProxy() {
-    // 构造函数
+    // Constructor
 }
 
 CommunicationProxy::~CommunicationProxy() {
@@ -29,30 +29,30 @@ CommunicationProxy::~CommunicationProxy() {
 
 bool CommunicationProxy::initialize(const std::string& basePath, CommRole role) {
     if(isInitialized_) {
-        LOG_WARN("通信代理已初始化");
+        LOG_WARN("Communication proxy already initialized");
         return true;
     }
 
-    LOG_INFO("正在初始化通信代理...");
+    LOG_INFO("Initializing communication proxy...");
     
-    // 设置初始连接状态为连接中
+    // Set initial connection state to connecting
     setConnectionState(ConnectionState::CONNECTING);
     
-    // 创建FIFO通信实现
+    // Create FIFO communication implementation
     commImpl_ = std::make_unique<FifoCommImpl>(basePath, role);
     
-    // 初始化通信实现
+    // Initialize communication implementation
     if (!commImpl_->initialize()) {
         LOG_ERROR("Failed to initialize CommunicationProxy");
         setConnectionState(ConnectionState::DISCONNECTED);
         return false;
     }
     
-    // 创建线程池
+    // Create thread pool
     threadPool_ = std::make_unique<utils::ThreadPool>(DEFAULT_THREAD_POOL_SIZE);
     
     isInitialized_ = true;
-    LOG_INFO("通信代理初始化成功");
+    LOG_INFO("Communication proxy initialized successfully");
     return true;
 }
 
@@ -62,30 +62,30 @@ bool CommunicationProxy::initialize() {
 
 void CommunicationProxy::start() {
     if(!isInitialized_) {
-        LOG_ERROR("无法启动通信代理: 未初始化");
+        LOG_ERROR("Cannot start communication proxy: not initialized");
         return;
     }
 
     if(isRunning_) {
-        LOG_WARN("通信代理已在运行");
+        LOG_WARN("Communication proxy already running");
         return;
     }
 
     isRunning_ = true;
-    LOG_INFO("正在启动通信代理...");
+    LOG_INFO("Starting communication proxy...");
 
-    // 启动消息接收线程
+    // Start message receiving thread
     receivingThread_ = std::thread(&CommunicationProxy::messageReceivingThread, this);
     
-    // 根据角色启动不同的初始化流程
+    // Start different initialization flow based on role
     if (commImpl_->isServer()) {
-        LOG_INFO("服务端启动，等待客户端连接...");
+        LOG_INFO("Server started, waiting for client connection...");
     } else {
-        // 客户端需要尝试连接到服务端
-        LOG_INFO("客户端启动，尝试连接到服务端...");
+        // Client needs to try connecting to server
+        LOG_INFO("Client started, attempting to connect to server...");
     }
     
-    LOG_INFO("通信代理已启动");
+    LOG_INFO("Communication proxy started");
 }
 
 void CommunicationProxy::stop() {
@@ -93,59 +93,59 @@ void CommunicationProxy::stop() {
         return;
     }
 
-    LOG_INFO("正在停止通信代理...");
+    LOG_INFO("Stopping communication proxy...");
     isRunning_ = false;
     
-    // 通知所有等待的线程
+    // Notify all waiting threads
     {
         std::lock_guard<std::mutex> lock(connectionMutex_);
         connectionCondition_.notify_all();
     }
     
-    // 等待线程结束
+    // Wait for thread to end
     if(receivingThread_.joinable()) {
         receivingThread_.join();
     }
     
-    // 销毁线程池（析构函数会处理线程关闭）
+    // Destroy thread pool (destructor will handle thread shutdown)
     threadPool_.reset();
     
-    // 清理通信资源
+    // Clean up communication resources
     if (commImpl_) {
         commImpl_->cleanup();
     }
     
-    // 更新连接状态
+    // Update connection state
     setConnectionState(ConnectionState::DISCONNECTED);
     
-    LOG_INFO("通信代理已停止");
+    LOG_INFO("Communication proxy stopped");
 }
 
 bool CommunicationProxy::sendMessage(MessageType type, const std::string& content) {
     if(!isRunning_) {
-        LOG_ERROR("无法发送消息: 通信代理未运行");
+        LOG_ERROR("Cannot send message: communication proxy not running");
         return false;
     }
     
-    // 检查连接状态
+    // Check connection state
     if (connectionState_ != ConnectionState::CONNECTED) {
-        // 尝试建立连接
+        // Try to establish connection
         if (type != MessageType::HEARTBEAT) {
-            LOG_WARN("发送消息失败: 未连接，消息类型=", static_cast<int>(type), ", 内容=", content);
+            LOG_WARN("Failed to send message: not connected, message type=", static_cast<int>(type), ", content=", content);
         }
         return false;
     }
     
-    // 创建消息，设置优先级
+    // Create message, set priority
     MessagePriority priority = getMessagePriority(type);
     Message message(type, content, priority);
     
-    LOG_DEBUG("发送消息: type=", static_cast<int>(type), ", content=", content);
+    LOG_DEBUG("Sending message: type=", static_cast<int>(type), ", content=", content);
     
-    // 序列化消息并通过通信实现发送
+    // Serialize message and send through communication implementation
     bool result = commImpl_->sendMessage(message.serialize());
     
-    // 如果发送失败，可能是连接断开
+    // If send fails, connection may be broken
     if (!result) {
         setConnectionState(ConnectionState::DISCONNECTED);
     }
@@ -156,31 +156,31 @@ bool CommunicationProxy::sendMessage(MessageType type, const std::string& conten
 void CommunicationProxy::registerCallback(MessageType type, MessageCallback callback) {
     std::lock_guard<std::mutex> lock(callbackMutex_);
     callbacks_[type] = callback;
-    LOG_DEBUG("注册了消息类型的回调: ", static_cast<int>(type));
+    LOG_DEBUG("Registered callback for message type: ", static_cast<int>(type));
 }
 
 void CommunicationProxy::unregisterCallback(MessageType type) {
     std::lock_guard<std::mutex> lock(callbackMutex_);
     callbacks_.erase(type);
-    LOG_DEBUG("注销了消息类型的回调: ", static_cast<int>(type));
+    LOG_DEBUG("Unregistered callback for message type: ", static_cast<int>(type));
 }
 
 CommunicationProxy::MessagePriority CommunicationProxy::getMessagePriority(MessageType type) {
-    // 为不同消息类型设置优先级
+    // Set priority for different message types
     switch (type) {
         case MessageType::HEARTBEAT:
-            return MessagePriority::HIGH;  // 心跳消息最高优先级
+            return MessagePriority::HIGH;  // Heartbeat messages have highest priority
             
         case MessageType::ERROR:
         case MessageType::STATUS_REPORT:
-            return MessagePriority::HIGH;  // 错误和状态报告也是高优先级
+            return MessagePriority::HIGH;  // Error and status reports also have high priority
             
         case MessageType::COMMAND:
-            return MessagePriority::NORMAL;  // 命令消息普通优先级
+            return MessagePriority::NORMAL;  // Command messages have normal priority
             
         case MessageType::METADATA:
         case MessageType::DATA:
-            return MessagePriority::LOW;  // 数据消息低优先级
+            return MessagePriority::LOW;  // Data messages have low priority
             
         default:
             return MessagePriority::NORMAL;
@@ -188,127 +188,109 @@ CommunicationProxy::MessagePriority CommunicationProxy::getMessagePriority(Messa
 }
 
 void CommunicationProxy::messageReceivingThread() {
-    LOG_DEBUG("消息接收线程已启动");
+    LOG_DEBUG("Message receiving thread started");
     
-    // 首次成功接收消息标志
+    // Flag for first successful message reception
     bool firstMessageReceived = false;
     
-    // 消息处理计数
+    // Message processing counter
     int messagesProcessedInBatch = 0;
-    const int MAX_MESSAGES_PER_BATCH = 10; // 单次循环最大处理消息数
+    const int MAX_MESSAGES_PER_BATCH = 10; // Maximum messages to process in a single loop
     
     while(isRunning_) {
         try {
-            // 重置批处理计数
+            // Reset batch processing counter
             messagesProcessedInBatch = 0;
             
-            // 使用轮询方式接收消息，循环处理所有可用消息
+            // Use polling to receive messages, process all available messages in loop
             while(isRunning_ && messagesProcessedInBatch < MAX_MESSAGES_PER_BATCH) {
                 std::string messageData;
                 if(commImpl_->receiveMessage(messageData)) {
-                    // 如果是首次接收到消息，更新连接状态
+                    // If this is the first message received, update connection state
                     if (!firstMessageReceived) {
                         firstMessageReceived = true;
                         setConnectionState(ConnectionState::CONNECTED);
-                        LOG_INFO("成功接收第一条消息，连接已建立");
+                        LOG_INFO("Successfully received first message, connection established");
                     }
                     
-                    // 反序列化消息
+                    // Deserialize message
                     Message message = Message::deserialize(messageData);
                     
-                    LOG_DEBUG("接收消息: type=", static_cast<int>(message.type), 
+                    LOG_DEBUG("Received message: type=", static_cast<int>(message.type), 
                              ", content=", message.content);
                     
-                    // 对高优先级消息直接同步处理，其他消息提交给线程池异步处理
+                    // Process high priority messages synchronously, submit others to thread pool
                     if (message.priority == MessagePriority::HIGH) {
-                        // 高优先级消息同步处理（如心跳）
+                        // Process high priority messages synchronously (like heartbeat)
                         processReceivedMessage(message);
                     } else {
-                        // 其他消息异步处理
-                        Message msgCopy = message; // 创建消息的副本
+                        // Process other messages asynchronously
+                        Message msgCopy = message; // Create a copy of the message
                         threadPool_->submit([this, msgCopy]() {
                             processReceivedMessage(msgCopy);
                         });
                     }
                     
-                    // 增加批处理计数
+                    // Increment batch processing counter
                     messagesProcessedInBatch++;
                 } else {
-                    // 没有更多消息可处理，退出内循环
+                    // No more messages to process, exit inner loop
                     break;
                 }
             }
             
-            // 如果单次循环处理了大量消息，记录日志
+            // If a large number of messages were processed in a single loop, log it
             if (messagesProcessedInBatch >= MAX_MESSAGES_PER_BATCH) {
-                LOG_WARN("单次循环处理了大量消息: ", messagesProcessedInBatch, 
-                        "，可能存在消息堆积");
+                LOG_WARN("Processed large number of messages in a single loop: ", messagesProcessedInBatch, 
+                        ", possible message accumulation");
             }
             
-            // 检查连接状态
+            // Check connection state
             if (commImpl_->isConnected()) {
                 if (connectionState_ != ConnectionState::CONNECTED) {
                     setConnectionState(ConnectionState::CONNECTED);
                 }
             } else {
-                if (connectionState_ == ConnectionState::CONNECTED) {
+                if (connectionState_ != ConnectionState::DISCONNECTED) {
                     setConnectionState(ConnectionState::DISCONNECTED);
                 }
             }
             
-            // 检查是否应该退出
-            if(!isRunning_) {
-                break;
-            }
+            // Sleep to avoid busy loop
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         catch(const std::exception& e) {
-            LOG_ERROR("消息接收线程异常: ", e.what());
-            
-            // 发生异常，可能是连接断开
-            if (connectionState_ == ConnectionState::CONNECTED) {
-                setConnectionState(ConnectionState::DISCONNECTED);
-            }
+            LOG_ERROR("Message receiving thread exception: ", e.what());
+            setConnectionState(ConnectionState::DISCONNECTED);
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        
-        // 短暂休眠，避免CPU占用过高
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     
-    LOG_DEBUG("消息接收线程已停止");
+    LOG_DEBUG("Message receiving thread stopped");
 }
 
 void CommunicationProxy::processReceivedMessage(const Message& message) {
-    // 调用对应类型的回调函数
-    std::lock_guard<std::mutex> lock(callbackMutex_);
-    auto it = callbacks_.find(message.type);
-    if(it != callbacks_.end() && it->second) {
-        try {
+    try {
+        // Call registered callback for message type
+        std::lock_guard<std::mutex> lock(callbackMutex_);
+        auto it = callbacks_.find(message.type);
+        if (it != callbacks_.end() && it->second) {
             it->second(message);
         }
-        catch(const std::exception& e) {
-            LOG_ERROR("消息回调异常: ", e.what());
-        }
+    }
+    catch(const std::exception& e) {
+        LOG_ERROR("Message callback exception: ", e.what());
     }
 }
 
-// CommunicationProxy类中的连接状态相关函数
 void CommunicationProxy::registerConnectionCallback(ConnectionCallback callback) {
     std::lock_guard<std::mutex> lock(connectionMutex_);
     connectionCallback_ = callback;
-    
-    // 如果已经连接，立即通知
-    if (connectionState_ == ConnectionState::CONNECTED && callback) {
-        callback(ConnectionState::CONNECTED);
-    }
 }
 
 void CommunicationProxy::unregisterConnectionCallback() {
     std::lock_guard<std::mutex> lock(connectionMutex_);
     connectionCallback_ = nullptr;
-}
-
-CommunicationProxy::ConnectionState CommunicationProxy::getConnectionState() const {
-    return connectionState_;
 }
 
 bool CommunicationProxy::waitForConnection(int timeoutMs) {
@@ -318,14 +300,14 @@ bool CommunicationProxy::waitForConnection(int timeoutMs) {
         return true;
     }
     
-    if (timeoutMs == 0) {
-        // 无限等待
+    if (timeoutMs <= 0) {
+        // Wait indefinitely
         connectionCondition_.wait(lock, [this]() {
             return connectionState_ == ConnectionState::CONNECTED || !isRunning_;
         });
     } else {
-        // 有超时限制
-        connectionCondition_.wait_for(lock, std::chrono::milliseconds(timeoutMs), [this]() {
+        // Wait with timeout
+        return connectionCondition_.wait_for(lock, std::chrono::milliseconds(timeoutMs), [this]() {
             return connectionState_ == ConnectionState::CONNECTED || !isRunning_;
         });
     }
@@ -334,21 +316,25 @@ bool CommunicationProxy::waitForConnection(int timeoutMs) {
 }
 
 void CommunicationProxy::setConnectionState(ConnectionState newState) {
-    ConnectionState oldState = connectionState_.exchange(newState);
+    ConnectionState oldState = connectionState_;
     
     if (oldState != newState) {
-        LOG_INFO("通信连接状态变化: ", static_cast<int>(newState));
+        connectionState_ = newState;
         
-        // 如果状态变为已连接，通知所有等待的线程
-        if (newState == ConnectionState::CONNECTED) {
+        LOG_INFO("Communication connection state changed: ", static_cast<int>(newState));
+        
+        // Notify waiters
+        {
             std::lock_guard<std::mutex> lock(connectionMutex_);
             connectionCondition_.notify_all();
         }
         
-        // 调用回调函数
-        std::lock_guard<std::mutex> lock(connectionMutex_);
+        // Call callback if registered
         if (connectionCallback_) {
-            connectionCallback_(newState);
+            std::lock_guard<std::mutex> lock(connectionMutex_);
+            if (connectionCallback_) {
+                connectionCallback_(newState);
+            }
         }
     }
 } 

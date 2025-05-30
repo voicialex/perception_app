@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 # target options
-option(OB_BUILD_EXAMPLES "Build SDK examples" OFF)
+option(OB_BUILD_EXAMPLES "Build SDK examples" ON)
 option(OB_BUILD_TESTS "Build tests" OFF)
 option(OB_BUILD_TOOLS "Build tools" ON)
 option(OB_BUILD_DOCS "Build api document and install doc" OFF)

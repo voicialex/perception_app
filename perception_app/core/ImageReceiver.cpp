@@ -36,7 +36,7 @@ bool ImageReceiver::initialize() {
         // 确保保存目录存在
         if(config.saveConfig.enableDump) {
             if(!config.ensureSaveDirectoryExists()) {
-                LOG_WARN("无法创建保存目录，数据保存可能失败");
+                LOG_WARN("Failed to create save directory, data saving may fail");
             }
         }
         
@@ -47,9 +47,9 @@ bool ImageReceiver::initialize() {
         // 创建线程池
         if(enableParallelProcessing_) {
             threadPool_ = std::make_unique<utils::ThreadPool>(threadPoolSize_);
-            LOG_INFO("创建线程池，线程数: ", threadPool_->size());
+            LOG_INFO("Thread pool created, number of threads: ", threadPool_->size());
         } else {
-            LOG_INFO("并行处理已禁用，使用串行处理模式");
+            LOG_INFO("Parallel processing disabled, using serial processing mode");
         }
         
         // 创建设备管理器
@@ -97,8 +97,7 @@ bool ImageReceiver::initialize() {
         }
         
         // 初始化性能统计
-        performanceStats_.startTime = std::chrono::steady_clock::now();
-        performanceStats_.lastStatsTime = performanceStats_.startTime;
+        resetPerformanceStats();
         
         isInitialized_ = true;
         LOG_INFO("ImageReceiver initialized successfully");
@@ -208,10 +207,21 @@ void ImageReceiver::handleKeyPress(int key) {
             break;
         case 's':
         case 'S': // S键显示性能统计
+            LOG_INFO("S key pressed, printing performance stats...");
             printPerformanceStats();
+            break;
+        case 't':
+        case 'T': // T键重置性能统计
+            LOG_INFO("T key pressed, resetting performance stats...");
+            resetPerformanceStats();
             break;
         default:
             break;
+    }
+    
+    // 打印可用的键盘快捷键
+    if (key != -1) { // 只在有按键时显示
+        LOG_INFO("Available controls: ESC=Exit, R=Reboot device, P=Print devices, S=Show stats, T=Reset stats");
     }
 }
 
@@ -372,15 +382,15 @@ bool ImageReceiver::startPipelines() {
 void ImageReceiver::processFrameSet(std::shared_ptr<ob::FrameSet> frameset) {
     if(!frameset) return;
 
-    // 更新性能统计
+    // Update performance statistics
     performanceStats_.frameCount++;
     performanceStats_.totalFrames++;
 
     if(enableParallelProcessing_ && threadPool_) {
-        // 使用并行处理
+        // Use parallel processing
         processFrameSetParallel(frameset);
     } else {
-        // 使用串行处理
+        // Use serial processing
         std::unique_lock<std::mutex> lk(frameMutex_);
         for(uint32_t i = 0; i < frameset->frameCount(); ++i) {
             auto frame = frameset->getFrame(i);
@@ -395,89 +405,99 @@ void ImageReceiver::processFrameSet(std::shared_ptr<ob::FrameSet> frameset) {
 void ImageReceiver::processFrameSetParallel(std::shared_ptr<ob::FrameSet> frameset) {
     if(!frameset || !threadPool_) return;
     
-    // 清理已完成的任务
+    // Clean up completed tasks
     cleanupCompletedTasks();
     
-    // 获取帧集合中的帧数量
+    // Get the number of frames in the frame set
     uint32_t frameCount = frameset->frameCount();
 
-    // 记录帧集合信息
-    LOG_DEBUG("收到帧集合，帧数量: ", frameCount, ", 时间戳: ", frameset->timeStamp());
+    // Log frame set information
+    LOG_DEBUG("Received frame set, frame count: ", frameCount, ", timestamp: ", frameset->timeStamp());
     
-    // 获取所有帧并并行处理
+    // Get all frames and process in parallel
     for(uint32_t i = 0; i < frameCount; ++i) {
         auto frame = frameset->getFrame(i);
         
         if(!frame) {
-            LOG_WARN("获取到空帧，索引: ", i);
+            LOG_WARN("Received empty frame, index: ", i);
             continue;
         }
         
-        // 记录帧类型
+        // Record frame type
         OBFrameType frameType = frame->type();
-        // 保存帧引用到帧映射中
+        
+        // Save frame reference to frame map
         {
             std::unique_lock<std::mutex> lk(frameMutex_);
             frameMap_[frameType] = frame;
         }
         
-        // 将处理任务提交到线程池
+        // Submit processing task to thread pool
         try {
             std::future<void> future = threadPool_->enqueue(
                 [this, frame]() {
-                    // 记录当前线程ID，以便跟踪多线程执行
-                    std::thread::id threadId = std::this_thread::get_id();
-                    std::stringstream threadIdStr;
-                    threadIdStr << threadId;
-                    LOG_DEBUG("线程", threadIdStr.str(),
-                              "开始处理帧，类型: ", static_cast<int>(frame->type()), 
-                              ", 索引: ", frame->index(), 
-                              ", 时间戳: ", frame->timeStamp());
-
-                            
+                    // 记录处理开始时间
                     auto start = std::chrono::steady_clock::now();
+                    // 处理帧
                     this->processFrame(frame);
-                    auto end = std::chrono::steady_clock::now();
                     
+                    // 计算处理时间
+                    auto end = std::chrono::steady_clock::now();
                     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-                    LOG_DEBUG("线程", threadIdStr.str(),
-                              "完成处理帧，类型: ", static_cast<int>(frame->type()), 
-                              ", 索引: ", frame->index(), 
-                              ", 时间戳: ", frame->timeStamp(),
-                              ", 用时： ", duration);
+                    // 更新性能统计数据
+                    performanceStats_.currentProcessingTime = duration;
+                    performanceStats_.totalProcessingTime += duration;
+                    performanceStats_.processedFramesCount++;
+                    
+                    // 更新最小和最大处理时间
+                    // 注意：这里可能有多线程竞争，但对统计数据影响很小
+                    if (duration < performanceStats_.minProcessingTime) {
+                        performanceStats_.minProcessingTime = duration;
+                    }
+                    if (duration > performanceStats_.maxProcessingTime) {
+                        performanceStats_.maxProcessingTime = duration;
+                    }
+
+                    // 帧类型文本描述
+                    std::string frameTypeStr = ob::TypeHelper::convertOBFrameTypeToString(frame->type());
+
+                    LOG_DEBUG("Frame processed, type: ", frameTypeStr, " (", static_cast<int>(frame->type()), ")", 
+                              ", index: ", frame->index(), 
+                              ", timestamp: ", frame->timeStamp(),
+                              ", duration: ", duration, " ms");
                 }
             );
             
-            // 保存future以便跟踪任务完成
+            // Save future to track task completion
             std::unique_lock<std::mutex> lk(futuresMutex_);
             frameFutures_.push_back(std::move(future));
         } 
         catch(const std::exception& e) {
-            LOG_ERROR("提交任务到线程池失败: ", e.what());
-            // 如果提交失败，在当前线程处理
+            LOG_ERROR("Failed to submit task to thread pool: ", e.what());
+            // If submission fails, process in current thread
             processFrame(frame);
         }
     }
     
-    // 记录任务队列状态
+    // Log task queue status
     {
         std::unique_lock<std::mutex> lk(futuresMutex_);
-        LOG_DEBUG("当前待处理任务数: ", frameFutures_.size(), 
-                  ", 线程池队列大小: ", threadPool_->queueSize());
+        LOG_DEBUG("Current pending tasks: ", frameFutures_.size(), 
+                  ", thread pool queue size: ", threadPool_->queueSize());
     }
 }
 
 void ImageReceiver::cleanupCompletedTasks() {
     std::unique_lock<std::mutex> lk(futuresMutex_);
     
-    // 移除已完成的任务
+    // Remove completed tasks
     frameFutures_.erase(
         std::remove_if(
             frameFutures_.begin(), 
             frameFutures_.end(),
             [](std::future<void>& f) {
-                // 检查任务是否已完成
+                // Check if task is completed
                 return f.valid() && 
                        f.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready;
             }
@@ -485,12 +505,12 @@ void ImageReceiver::cleanupCompletedTasks() {
         frameFutures_.end()
     );
     
-    // 如果队列太长，等待一些任务完成
+    // If queue is too long, wait for some tasks to complete
     auto& config = ConfigHelper::getInstance();
     if(frameFutures_.size() > static_cast<size_t>(config.parallelConfig.maxQueuedTasks)) {
-        LOG_WARN("等待任务队列中的任务完成，当前队列大小: ", frameFutures_.size());
+        LOG_WARN("Waiting for tasks in queue to complete, current queue size: ", frameFutures_.size());
         if(!frameFutures_.empty()) {
-            // 等待第一个任务完成
+            // Wait for first task to complete
             frameFutures_[0].wait();
         }
     }
@@ -503,18 +523,21 @@ void ImageReceiver::processFrame(std::shared_ptr<ob::Frame> frame) {
     auto& metadataHelper = MetadataHelper::getInstance();
     auto& frameHelper = DumpHelper::getInstance();
 
-    // 处理元数据
+    // Process metadata
     if(config.metadataConfig.enableMetadata && 
        frame->index() % config.metadataConfig.printInterval == 0) {
         metadataHelper.printMetadata(frame, config.metadataConfig.printInterval);
     }
 
-    // 处理帧保存 - 根据配置的帧间隔控制
+    // Process frame saving - based on configured frame interval
     if(config.saveConfig.enableDump) {
-        // 使用简化的帧间隔控制逻辑
+        // Use simplified frame interval control logic
         if(frame->index() % config.saveConfig.frameInterval == 0) {
-            LOG_DEBUG("保存帧，类型: ", static_cast<int>(frame->type()), 
-                      ", 索引: ", frame->index());
+            // 帧类型文本描述
+            std::string frameTypeStr = ob::TypeHelper::convertOBFrameTypeToString(frame->type());
+            
+            LOG_DEBUG("Saving frame, type: ", frameTypeStr, " (", static_cast<int>(frame->type()), ")", 
+                      ", index: ", frame->index());
             frameHelper.saveFrame(frame, config.saveConfig.dumpPath);
         }
     }
@@ -633,6 +656,14 @@ void ImageReceiver::updatePerformanceStats() {
         performanceStats_.currentFPS = (performanceStats_.frameCount.load() * 1000.0) / elapsed;
         performanceStats_.averageFPS = (performanceStats_.totalFrames.load() * 1000.0) / totalElapsed;
         
+        // 计算平均处理时间
+        auto processedFrames = performanceStats_.processedFramesCount.load();
+        if (processedFrames > 0) {
+            performanceStats_.avgProcessingTime = 
+                static_cast<double>(performanceStats_.totalProcessingTime.load()) / processedFrames;
+        }
+        
+        // 重置帧计数器，但保留总处理时间统计(仅在需要时重置)
         performanceStats_.frameCount = 0;
         performanceStats_.lastStatsTime = now;
         
@@ -651,6 +682,11 @@ void ImageReceiver::updateWindowTitle() {
         title += " - FPS: " + std::to_string(static_cast<int>(performanceStats_.currentFPS));
     }
     
+    // 添加当前处理时间到窗口标题
+    if(performanceStats_.currentProcessingTime > 0) {
+        title += " - Processing: " + std::to_string(static_cast<int>(performanceStats_.currentProcessingTime.load())) + " ms";
+    }
+    
     // 注意：这里需要CVWindow支持动态标题更新，如果不支持则跳过
     // window_->setTitle(title);
 }
@@ -660,6 +696,15 @@ void ImageReceiver::printPerformanceStats() {
     LOG_INFO("Current FPS: ", performanceStats_.currentFPS);
     LOG_INFO("Average FPS: ", performanceStats_.averageFPS);
     LOG_INFO("Total Frames: ", performanceStats_.totalFrames.load());
+    
+    // 添加处理时间统计信息
+    LOG_INFO("Frame Processing Time Statistics:");
+    LOG_INFO("  - Current: ", performanceStats_.currentProcessingTime.load(), " ms");
+    LOG_INFO("  - Average: ", performanceStats_.avgProcessingTime, " ms");
+    LOG_INFO("  - Minimum: ", performanceStats_.minProcessingTime, " ms");
+    LOG_INFO("  - Maximum: ", performanceStats_.maxProcessingTime, " ms");
+    LOG_INFO("  - Processed Frames: ", performanceStats_.processedFramesCount.load());
+    
     LOG_INFO("Device State: ", static_cast<int>(deviceManager_->getDeviceState()));
     LOG_INFO("Pipelines Running: ", pipelinesRunning_.load());
     
@@ -682,6 +727,12 @@ void ImageReceiver::stop() {
 }
 
 bool ImageReceiver::isVideoSensorTypeEnabled(OBSensorType sensorType) {
+    // 首先使用 SDK 提供的方法判断是否为视频传感器
+    if (!ob::TypeHelper::isVideoSensorType(sensorType)) {
+        return false;
+    }
+    
+    // 再根据配置判断是否启用
     auto& config = ConfigHelper::getInstance().streamConfig;
     switch(sensorType) {
         case OB_SENSOR_COLOR: return config.enableColor;
@@ -709,7 +760,7 @@ void ImageReceiver::cleanup() {
         
         // 等待所有任务完成
         if(threadPool_) {
-            LOG_INFO("等待线程池任务完成...");
+            LOG_INFO("Waiting for thread pool tasks to complete...");
             cleanupCompletedTasks();
         }
         
@@ -857,4 +908,25 @@ bool ImageReceiver::restartStreaming() {
     
     // 重新启动
     return startStreaming();
+}
+
+void ImageReceiver::resetPerformanceStats() {
+    auto now = std::chrono::steady_clock::now();
+    
+    performanceStats_.frameCount = 0;
+    performanceStats_.totalFrames = 0;
+    performanceStats_.startTime = now;
+    performanceStats_.lastStatsTime = now;
+    performanceStats_.currentFPS = 0.0;
+    performanceStats_.averageFPS = 0.0;
+    
+    // 重置处理时间统计
+    performanceStats_.totalProcessingTime = 0;
+    performanceStats_.processedFramesCount = 0;
+    performanceStats_.avgProcessingTime = 0.0;
+    performanceStats_.minProcessingTime = std::numeric_limits<double>::max();
+    performanceStats_.maxProcessingTime = 0.0;
+    performanceStats_.currentProcessingTime = 0.0;
+    
+    LOG_DEBUG("Performance statistics reset");
 }
