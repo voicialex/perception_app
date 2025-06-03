@@ -1,58 +1,64 @@
-# 相机标定模块
-project(calibration_module)
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
 
-# 查找OpenCV
-find_package(OpenCV REQUIRED)
-if(OpenCV_FOUND)
-    message(STATUS "Found OpenCV version: ${OpenCV_VERSION}")
-else()
-    message(FATAL_ERROR "OpenCV not found!")
+cmake_minimum_required(VERSION 3.5)
+project(calibration)
+
+# 检查OpenCV是否可用
+if(NOT OpenCV_FOUND)
+    message(WARNING "OpenCV not found, skipping calibration module")
+    return()
 endif()
 
-# 包含目录
-include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core)
-
-# 获取Orbbec SDK包含路径
-get_target_property(ORBBEC_INCLUDE_DIRS ob::OrbbecSDK INTERFACE_INCLUDE_DIRECTORIES)
-if(ORBBEC_INCLUDE_DIRS)
-    include_directories(${ORBBEC_INCLUDE_DIRS})
+# 检查OrbbecSDK是否可用
+get_target_property(OrbbecSDK_TARGET_TYPE ob::OrbbecSDK TYPE)
+if(NOT OrbbecSDK_TARGET_TYPE)
+    message(STATUS "OrbbecSDK target not found, calibration module will have limited functionality")
+    set(HAS_ORBBEC_SDK FALSE)
 else()
-    # 备用路径
-    include_directories(${CMAKE_SOURCE_DIR}/include)
+    set(HAS_ORBBEC_SDK TRUE)
 endif()
 
-# 标定模块源文件
-set(CALIBRATION_SOURCES
+# 创建标定库
+add_library(calibration STATIC
     CalibrationManager.cpp
-)
-
-# 标定模块头文件
-set(CALIBRATION_HEADERS
     CalibrationManager.hpp
 )
 
-# 创建标定模块库
-add_library(calibration STATIC
-    ${CALIBRATION_SOURCES}
-    ${CALIBRATION_HEADERS}
+# 设置包含目录
+target_include_directories(calibration PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../utils
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core
 )
 
-# 添加别名以保持一致的命名
+# 链接基础依赖
+target_link_libraries(calibration PUBLIC
+    ${OpenCV_LIBS}
+    perception::utils
+    spdlog::spdlog
+)
+
+# 包含OpenCV头文件
+target_include_directories(calibration PUBLIC ${OpenCV_INCLUDE_DIRS})
+
+# 如果有OrbbecSDK，链接它
+if(HAS_ORBBEC_SDK)
+    target_link_libraries(calibration PUBLIC ob::OrbbecSDK)
+    target_compile_definitions(calibration PUBLIC HAS_OBSENSOR)
+endif()
+
+# 定义标定功能可用的宏
+target_compile_definitions(calibration PUBLIC HAS_CALIBRATION)
+
+# 创建别名
 add_library(perception::calibration ALIAS calibration)
 
-# 链接库
-target_link_libraries(calibration
-    ${OpenCV_LIBS}
-    ob::OrbbecSDK
-)
-
-# 设置编译选项
-target_compile_features(calibration PRIVATE cxx_std_14)
+# 设置目标属性
+set_target_properties(calibration PROPERTIES FOLDER "perception")
 
 # 安装头文件
-install(FILES ${CALIBRATION_HEADERS}
+install(FILES CalibrationManager.hpp
     DESTINATION include/calibration
 )
 

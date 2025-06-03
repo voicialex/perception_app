@@ -33,10 +33,10 @@ bool ImageReceiver::initialize() {
         
         auto& config = ConfigHelper::getInstance();
         
-        // 确保保存目录存在
+        // 初始化数据保存路径（由DumpHelper负责）
         if(config.saveConfig.enableDump) {
-            if(!config.ensureSaveDirectoryExists()) {
-                LOG_WARN("Failed to create save directory, data saving may fail");
+            if (!DumpHelper::getInstance().initializeSavePath()) {
+                LOG_WARN("Failed to initialize data save path, data saving may be disabled");
             }
         }
         
@@ -68,7 +68,9 @@ bool ImageReceiver::initialize() {
             return false;
         }
         
-        // 创建渲染窗口
+        // 根据配置决定是否创建渲染窗口
+        if(config.renderConfig.enableRendering) {
+            LOG_INFO("Creating render window...");
         window_ = std::make_unique<ob_smpl::CVWindow>(
             config.renderConfig.windowTitle,
             config.renderConfig.windowWidth,
@@ -79,11 +81,18 @@ bool ImageReceiver::initialize() {
         // 设置键盘回调
         setupKeyboardCallbacks();
         
-        // 创建无信号画面
+            LOG_DEBUG("Render window created successfully");
+        } else {
+            LOG_INFO("Rendering disabled, running in headless mode");
+        }
+        
+        // 创建无信号画面（即使在无头模式下也可能需要）
         createNoSignalFrame();
         
-        // 立即显示背景
+        // 如果有窗口，立即显示背景
+        if(window_) {
         showNoSignalFrame();
+        }
         
         // 启动设备管理器
         deviceManager_->start();
@@ -148,7 +157,14 @@ void ImageReceiver::createNoSignalFrame() {
 }
 
 void ImageReceiver::showNoSignalFrame() {
+    if(!ConfigHelper::getInstance().renderConfig.enableRendering) {
+        // 在无头模式下，只更新内部状态，不进行实际渲染
+        showingNoSignalFrame_ = true;
+        return;
+    }
+    
     if(!window_) {
+        LOG_DEBUG("No window available for rendering no signal frame");
         return;
     }
     
@@ -183,6 +199,11 @@ bool ImageReceiver::isNoSignalFrameShowing() const {
 }
 
 void ImageReceiver::setupKeyboardCallbacks() {
+    if(!window_) {
+        LOG_DEBUG("No window available, skipping keyboard callback setup");
+        return;
+    }
+    
     window_->setKeyPressedCallback([this](int key) {
         handleKeyPress(key);
     });
@@ -561,15 +582,21 @@ void ImageReceiver::run() {
     try {
         LOG_INFO("Starting ImageReceiver main loop...");
         
-        // 初始化时先显示无信号画面
+        auto& config = ConfigHelper::getInstance();
+        
+        // 如果启用渲染，初始化时先显示无信号画面
+        if(config.renderConfig.enableRendering && window_) {
         showNoSignalFrame();
+        }
         
         // 主循环
         while(!shouldExit_) {
-            // 检查窗口状态，如果窗口关闭也退出
+            // 只在有窗口时检查窗口状态
+            if(config.renderConfig.enableRendering && window_) {
             if(!window_->run()) {
                 LOG_INFO("Window closed, exiting...");
                 break;
+                }
             }
             
             renderFrames();
@@ -593,7 +620,11 @@ void ImageReceiver::run() {
 }
 
 void ImageReceiver::renderFrames() {
-    if(!ConfigHelper::getInstance().renderConfig.enableRendering) {
+    auto& config = ConfigHelper::getInstance();
+    
+    if(!config.renderConfig.enableRendering || !window_) {
+        // 在无头模式下或无窗口时，仍然可以处理数据但不进行渲染
+        // 保持帧数据更新以支持其他功能（如保存、推理等）
         return;
     }
     
@@ -608,7 +639,7 @@ void ImageReceiver::renderFrames() {
     }
 
     // 收集IMU数据流帧
-    if(ConfigHelper::getInstance().streamConfig.enableIMU) {
+    if(config.streamConfig.enableIMU) {
         std::lock_guard<std::mutex> lock(imuFrameMutex_);
         for(auto &frame: imuFrameMap_) {
             framesForRender.push_back(std::const_pointer_cast<const ob::Frame>(frame.second));
@@ -649,7 +680,7 @@ void ImageReceiver::renderFrames() {
 }
 
 void ImageReceiver::updatePerformanceStats() {
-    auto& config = ConfigHelper::getInstance().debugConfig;
+    auto& config = ConfigHelper::getInstance().inferenceConfig;
     if(!config.enablePerformanceStats) {
         return;
     }
@@ -682,7 +713,7 @@ void ImageReceiver::updatePerformanceStats() {
 
 void ImageReceiver::updateWindowTitle() {
     auto& config = ConfigHelper::getInstance().renderConfig;
-    if(!config.showFPS) {
+    if(!config.showFPS || !window_) {
         return;
     }
     
@@ -792,7 +823,10 @@ void ImageReceiver::cleanup() {
         mainPipeline_.reset();
         
         // 清理窗口
+        if(window_) {
         window_.reset();
+            LOG_DEBUG("Window cleaned up");
+        }
         
         isInitialized_ = false;
         

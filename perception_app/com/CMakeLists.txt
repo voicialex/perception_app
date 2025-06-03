@@ -22,6 +22,8 @@ add_library(perception_com STATIC
 # 链接依赖库
 target_link_libraries(perception_com PUBLIC 
     ob::examples::utils
+    perception::utils
+    spdlog::spdlog
     pthread
 )
 

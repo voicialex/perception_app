@@ -8,6 +8,7 @@ set(CORE_SOURCES
     MetadataHelper.cpp
     DumpHelper.cpp
     PerceptionSystem.cpp
+    ConfigHelper.cpp
 )
 
 set(CORE_HEADERS
@@ -29,6 +30,8 @@ add_library(perception_core STATIC
 target_link_libraries(perception_core PUBLIC 
     ob::OrbbecSDK
     ob::examples::utils
+    perception::utils
+    spdlog::spdlog
     pthread
 )
 

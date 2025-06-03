@@ -1,58 +1,63 @@
-# 推理框架模块
-project(inference_framework)
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
 
-# 查找OpenCV
-find_package(OpenCV REQUIRED)
-if(OpenCV_FOUND)
-    message(STATUS "Found OpenCV version: ${OpenCV_VERSION}")
-else()
-    message(FATAL_ERROR "OpenCV not found!")
+cmake_minimum_required(VERSION 3.5)
+project(inference)
+
+# 检查OpenCV是否可用，如果不可用则跳过推理模块
+if(NOT OpenCV_FOUND)
+    message(WARNING "OpenCV not found, skipping inference module")
+    return()
 endif()
 
-# 包含目录
-include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core)
-
-# 获取Orbbec SDK包含路径
-get_target_property(ORBBEC_INCLUDE_DIRS ob::OrbbecSDK INTERFACE_INCLUDE_DIRECTORIES)
-if(ORBBEC_INCLUDE_DIRS)
-    include_directories(${ORBBEC_INCLUDE_DIRS})
+# 检查OrbbecSDK是否可用
+get_target_property(OrbbecSDK_TARGET_TYPE ob::OrbbecSDK TYPE)
+if(NOT OrbbecSDK_TARGET_TYPE)
+    message(STATUS "OrbbecSDK target not found, inference module will have limited functionality")
+    set(HAS_ORBBEC_SDK FALSE)
 else()
-    # 备用路径
-    include_directories(${CMAKE_SOURCE_DIR}/include)
+    set(HAS_ORBBEC_SDK TRUE)
 endif()
 
-# 推理框架源文件
-set(INFERENCE_SOURCES
-    ONNXInference.cpp
+# 创建推理库
+add_library(inference STATIC
     InferenceManager.cpp
-)
-
-# 推理框架头文件
-set(INFERENCE_HEADERS
-    ONNXInference.hpp
+    ONNXInference.cpp
     InferenceManager.hpp
-    InferenceBase.hpp
+    ONNXInference.hpp
 )
 
-# 创建推理框架库
-add_library(ob_inference_framework STATIC
-    ${INFERENCE_SOURCES}
-    ${INFERENCE_HEADERS}
+# 设置包含目录
+target_include_directories(inference PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../utils
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core
 )
 
-# 添加别名以保持一致的命名
-add_library(perception::inference ALIAS ob_inference_framework)
-
-# 链接库
-target_link_libraries(ob_inference_framework
+# 链接基础依赖
+target_link_libraries(inference PUBLIC
     ${OpenCV_LIBS}
-    ob::OrbbecSDK
+    perception::utils
+    spdlog::spdlog
 )
 
-# 设置编译选项
-target_compile_features(ob_inference_framework PRIVATE cxx_std_14)
+# 包含OpenCV头文件
+target_include_directories(inference PUBLIC ${OpenCV_INCLUDE_DIRS})
+
+# 如果有OrbbecSDK，链接它
+if(HAS_ORBBEC_SDK)
+    target_link_libraries(inference PUBLIC ob::OrbbecSDK)
+    target_compile_definitions(inference PUBLIC HAS_OBSENSOR)
+endif()
+
+# 定义推理功能可用的宏
+target_compile_definitions(inference PUBLIC HAS_INFERENCE)
+
+# 创建别名
+add_library(perception::inference ALIAS inference)
+
+# 设置目标属性
+set_target_properties(inference PROPERTIES FOLDER "perception")
 
 # 安装头文件
 install(FILES ${INFERENCE_HEADERS}
@@ -60,7 +65,7 @@ install(FILES ${INFERENCE_HEADERS}
 )
 
 # 安装库文件
-install(TARGETS ob_inference_framework
+install(TARGETS inference
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin

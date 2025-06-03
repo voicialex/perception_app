@@ -53,35 +53,31 @@ int main() {
         LOG_INFO("=== Orbbec Camera Perception System ===");
         LOG_INFO("Starting application...");
         
-        // 获取配置并验证
+        // =================== 获取配置并设置日志系统 ===================
+        
+        // 获取配置实例
         auto& config = ConfigHelper::getInstance();
 
+        // 简化的日志配置
+        config.configureLogger(Logger::Level::DEBUG, true);  // DEBUG级别，启用文件日志
+        
+        // =================== 继续原有逻辑 ===================
+        
         // 添加这里：明确设置关键配置参数
         config.streamConfig.enableColor = true;
         config.streamConfig.enableDepth = true;
         config.renderConfig.enableRendering = true;
         config.hotPlugConfig.enableHotPlug = true;
         config.hotPlugConfig.waitForDeviceOnStartup = true;
-        config.debugConfig.enableDebugOutput = true;
-
-        // 设置调试级别以获取更多信息
-        Logger::getInstance().setLevel("DEBUG");
+        config.inferenceConfig.enablePerformanceStats = true;
 
         if(!config.validateAll()) {
             LOG_ERROR("Configuration validation failed!");
             return -1;
         }
         
-        // 设置日志系统
-        Logger::getInstance().setLevel(config.debugConfig.logLevel);
-        if(!config.debugConfig.logFile.empty()) {
-            Logger::getInstance().setLogFile(config.debugConfig.logFile);
-        }
-        
         // 打印当前配置
-        if(config.debugConfig.enableDebugOutput) {
             config.printConfig();
-        }
         
         // 初始化通信代理 - 作为服务端
         auto& commProxy = CommunicationProxy::getInstance();

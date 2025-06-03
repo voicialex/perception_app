@@ -10,122 +10,91 @@
 #include "ConfigHelper.hpp"
 #include "Logger.hpp"
 
-// Global variables for signal handling
+// 全局变量用于信号处理
 std::atomic<bool> g_exitRequested{false};
 std::unique_ptr<ImageReceiver> g_imageReceiver;
 
 /**
- * @brief Signal handler function
+ * @brief 信号处理函数 - 只使用异步信号安全的操作
  */
 void signalHandler(int signal) {
-    LOG_INFO("Signal caught: ", signal);
+    // 避免未使用参数警告
+    (void)signal;
+    
+    // 只使用异步信号安全的操作
     g_exitRequested = true;
     
     if (g_imageReceiver) {
         g_imageReceiver->stop();
     }
     
-    // Use a more graceful exit approach
-    static std::atomic<bool> forceExitInProgress{false};
-    
-    if (!forceExitInProgress) {
-        forceExitInProgress = true;
-        std::thread([signal]() {
-            // Wait a short time for normal program exit
-            std::this_thread::sleep_for(std::chrono::milliseconds(800));
-            if (g_exitRequested) {
-                LOG_ERROR("Program did not exit in time, forcing exit");
-                _exit(signal); // Use _exit instead of std::exit to avoid blocking in destructors
-            }
-        }).detach();
-    }
-}
-
-/**
- * @brief Ensure directory exists, create if not
- * @param dirPath Directory path
- * @return Whether creation was successful or directory already exists
- */
-bool ensureDirectoryExists(const std::string& dirPath) {
-    try {
-        if (dirPath.empty()) {
-            LOG_ERROR("Directory path is empty!");
-            return false;
-        }
-        
-        // Check if directory exists, create if not
-        if (!std::filesystem::exists(dirPath)) {
-            LOG_INFO("Creating directory: ", dirPath);
-            return std::filesystem::create_directories(dirPath);
-        }
-        
-        // Check if it's a directory
-        if (!std::filesystem::is_directory(dirPath)) {
-            LOG_ERROR("Path exists but is not a directory: ", dirPath);
-            return false;
-        }
-        
-        return true;
-    } catch (const std::exception& e) {
-        LOG_ERROR("Error creating directory: ", e.what());
-        return false;
-    }
+    // 不在信号处理函数中使用日志或创建线程
+    // 让主线程处理退出逻辑
 }
 
 int main() {
+    int returnCode = 0;
+    
     try {
-        // Set up signal handling
-        std::signal(SIGINT, signalHandler);
-        std::signal(SIGTERM, signalHandler);
-
-        // Set log level to DEBUG for more information
-        Logger::getInstance().setLevel("DEBUG");
+        // 获取配置实例并首先配置日志系统
+        auto& config = ConfigHelper::getInstance();
+        
+        // 配置日志系统 - camera_bin 使用文件日志
+        config.loggerConfig.logLevel = Logger::Level::INFO;
+        config.loggerConfig.logDirectory = "./logs/";
+        config.loggerConfig.enableFileLogging = true;  // camera_bin 启用文件日志
+        config.loggerConfig.enableConsole = true;
+        
+        // 通过 ConfigHelper 统一初始化日志系统
+        if (!config.initializeLogger()) {
+            std::cerr << "Failed to initialize logger through ConfigHelper" << std::endl;
+            return -1;
+        }
         
         LOG_INFO("=== Orbbec Camera Launcher ===");
         LOG_INFO("Starting up...");
         
-        // Get configuration and modify key parameters
-        auto& config = ConfigHelper::getInstance();
+        // 设置信号处理
+        std::signal(SIGINT, signalHandler);
+        std::signal(SIGTERM, signalHandler);
         
-        // Modify configuration to ensure basic streams are open and debug output is enabled
         LOG_INFO("Configuring camera parameters...");
+        
+        // 配置相机参数
         config.streamConfig.enableColor = true;
         config.streamConfig.enableDepth = true;
-        config.streamConfig.enableIR = true;      // 启用红外流
-        config.renderConfig.enableRendering = true;
+        config.streamConfig.enableIR = true;
+        config.metadataConfig.enableMetadata = true;
+        config.renderConfig.enableRendering = false;  // 无头模式
         config.renderConfig.showFPS = true;
         config.hotPlugConfig.enableHotPlug = true;
         config.hotPlugConfig.waitForDeviceOnStartup = true;
         config.hotPlugConfig.printDeviceEvents = true;
-        config.debugConfig.enableDebugOutput = true;
-        config.debugConfig.enablePerformanceStats = true;
+        config.inferenceConfig.enablePerformanceStats = true;
+        config.saveConfig.enableFrameStats = true;
         
-        // Set data saving configuration
+        // 配置数据保存
         config.saveConfig.enableDump = true;
-        config.saveConfig.dumpPath = "./dumps/";  // Use dumps subdirectory in current directory
-        config.saveConfig.saveColor = true;       // Save color images
-        config.saveConfig.saveDepth = true;       // Save depth images
-        config.saveConfig.saveIR = true;          // Save IR images
-        config.saveConfig.imageFormat = "png";    // Use PNG format
-        config.saveConfig.maxFramesToSave = 1000; // Maximum save 10,000 frames
+        config.saveConfig.dumpPath = "./dumps/";
+        config.saveConfig.saveColor = true;
+        config.saveConfig.saveDepth = true;
+        config.saveConfig.saveDepthColormap = true;
+        config.saveConfig.saveIR = true;
+        config.saveConfig.imageFormat = "png";
+        config.saveConfig.maxFramesToSave = 1000;
         
-        // Ensure save path exists
-        if (!ensureDirectoryExists(config.saveConfig.dumpPath)) {
-            LOG_ERROR("Cannot create data save directory, will use current directory");
-            config.saveConfig.dumpPath = "./";
-        }
-        
+        // 验证配置
         if (!config.validateAll()) {
             LOG_ERROR("Configuration validation failed!");
             return -1;
         }
         
-        // Print current configuration
+        // 打印配置
         config.printConfig();
         
         LOG_INFO("Waiting for device connection...");
         
-        // Create and initialize image receiver
+        // 创建并初始化图像接收器
         g_imageReceiver = std::make_unique<ImageReceiver>();
         if (!g_imageReceiver->initialize()) {
             LOG_ERROR("Cannot initialize image receiver");
@@ -134,7 +103,7 @@ int main() {
         
         LOG_INFO("Camera initialized successfully, starting operation...");
         
-        // Use new simplified interface to directly start stream processing
+        // 启动视频流处理
         LOG_INFO("Starting video stream processing...");
         if (!g_imageReceiver->startStreaming()) {
             LOG_INFO("Failed to start video stream, will rely on hot-plug mechanism, waiting 2 seconds...");
@@ -143,22 +112,51 @@ int main() {
             LOG_INFO("Video stream started successfully!");
         }
         
-        // Run main loop
+        // 主循环
         LOG_INFO("Starting main loop...");
-        g_imageReceiver->run();
         
-        // If normal exit, reset exit flag
-        g_exitRequested = false;
+        // 在单独的线程中运行图像接收器
+        std::thread receiverThread([&]() {
+            g_imageReceiver->run();
+        });
+        
+        // 主线程监听退出信号
+        while (!g_exitRequested) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        
+        // 优雅退出
+        LOG_INFO("Exit signal received, shutting down gracefully...");
+        
+        if (g_imageReceiver) {
+            g_imageReceiver->stop();
+        }
+        
+        // 等待接收器线程结束
+        if (receiverThread.joinable()) {
+            receiverThread.join();
+        }
         
         LOG_INFO("Program exited normally");
-        return 0;
+        
+    } catch (const std::exception& e) {
+        if (Logger::getInstance().isInitialized()) {
+            LOG_ERROR("Program error: {}", e.what());
+        } else {
+            std::cerr << "Program error: " << e.what() << std::endl;
+        }
+        returnCode = -1;
+    } catch (...) {
+        if (Logger::getInstance().isInitialized()) {
+            LOG_ERROR("Unknown error occurred");
+        } else {
+            std::cerr << "Unknown error occurred" << std::endl;
+        }
+        returnCode = -1;
     }
-    catch (const std::exception& e) {
-        LOG_ERROR("Program error: ", e.what());
-        return -1;
-    }
-    catch (...) {
-        LOG_ERROR("Unknown error occurred");
-        return -1;
-    }
+    
+    // 清理资源
+    g_imageReceiver.reset();
+    
+    return returnCode;
 } 

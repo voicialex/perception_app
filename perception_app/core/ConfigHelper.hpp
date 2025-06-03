@@ -5,6 +5,9 @@
 #include <fstream>
 #include <map>
 #include <filesystem>
+#include <chrono>
+#include <sstream>
+#include <iomanip>
 #include "Logger.hpp"
 
 /**
@@ -35,11 +38,7 @@ public:
         int depthHeight = 720;               // 深度流高度
         int depthFPS = 30;                   // 深度流帧率
         
-        bool validate() const {
-            return (enableColor || enableDepth || enableIR || enableIRLeft || enableIRRight || enableIMU) &&
-                   colorWidth > 0 && colorHeight > 0 && colorFPS > 0 &&
-                   depthWidth > 0 && depthHeight > 0 && depthFPS > 0;
-        }
+        bool validate() const;
     } streamConfig;
 
     // 渲染配置
@@ -51,9 +50,7 @@ public:
         bool autoResize = true;              // 自动调整窗口大小
         std::string windowTitle = "Orbbec Camera Demo";  // 窗口标题
         
-        bool validate() const {
-            return windowWidth > 0 && windowHeight > 0 && !windowTitle.empty();
-        }
+        bool validate() const;
     } renderConfig;
 
     // 数据保存配置
@@ -62,17 +59,15 @@ public:
         std::string dumpPath = "./dumps/";   // 保存路径
         bool saveColor = true;               // 保存彩色图像
         bool saveDepth = true;               // 保存深度图像
+        bool saveDepthColormap = false;      // 保存深度图像的colormap版本
         bool saveIR = true;                  // 保存红外图像
         bool savePointCloud = false;         // 保存点云数据
         std::string imageFormat = "png";     // 图像格式
         int maxFramesToSave = 1000;          // 最大保存帧数
         int frameInterval = 100;              // 保存帧间隔（每N帧保存一帧，值越大保存频率越低）
+        bool enableFrameStats = false;       // 启用帧统计信息
         
-        bool validate() const {
-            return !dumpPath.empty() && maxFramesToSave > 0 &&
-                   (imageFormat == "png" || imageFormat == "jpg" || imageFormat == "bmp") &&
-                   frameInterval > 0;
-        }
+        bool validate() const;
     } saveConfig;
 
     // 元数据显示配置
@@ -82,10 +77,10 @@ public:
         bool showTimestamp = true;           // 显示时间戳
         bool showFrameNumber = true;         // 显示帧号
         bool showDeviceInfo = true;          // 显示设备信息
+        bool enableTimingInfo = false;       // 启用详细时序信息
+        int statsInterval = 30;              // 统计信息输出间隔(秒)
         
-        bool validate() const {
-            return printInterval > 0;
-        }
+        bool validate() const;
     } metadataConfig;
 
     // 热插拔配置
@@ -98,25 +93,8 @@ public:
         int deviceStabilizeDelayMs = 500;    // 设备稳定等待时间
         bool waitForDeviceOnStartup = true;  // 启动时等待设备连接
         
-        bool validate() const {
-            return reconnectDelayMs >= 100 && maxReconnectAttempts > 0 && 
-                   deviceStabilizeDelayMs >= 0;
-        }
+        bool validate() const;
     } hotPlugConfig;
-
-    // 调试配置
-    struct DebugConfig {
-        bool enableDebugOutput = false;      // 启用调试输出
-        bool enablePerformanceStats = false; // 启用性能统计
-        bool enableErrorLogging = true;      // 启用错误日志
-        std::string logLevel = "INFO";       // 日志级别: DEBUG, INFO, WARN, ERROR
-        std::string logFile = "";            // 日志文件路径（空表示控制台输出）
-        
-        bool validate() const {
-            return logLevel == "DEBUG" || logLevel == "INFO" || 
-                   logLevel == "WARN" || logLevel == "ERROR";
-        }
-    } debugConfig;
 
     // 并行处理配置
     struct ParallelConfig {
@@ -124,9 +102,7 @@ public:
         int threadPoolSize = 4;                  // 线程池大小（0表示使用硬件并发数）
         int maxQueuedTasks = 100;                // 最大排队任务数
         
-        bool validate() const {
-            return threadPoolSize >= 0 && maxQueuedTasks > 0;
-        }
+        bool validate() const;
     } parallelConfig;
 
     // 推理配置
@@ -136,7 +112,7 @@ public:
         std::string defaultModelType = "";      // 默认模型类型
         float defaultThreshold = 0.5f;          // 默认置信度阈值
         bool enableVisualization = true;       // 是否启用可视化
-        bool enablePerformanceStats = true;    // 是否启用性能统计
+        bool enablePerformanceStats = false;   // 是否启用性能统计
         int inferenceInterval = 1;             // 推理间隔（每N帧推理一次）
         std::string classNamesFile = "";       // 类别名称文件路径
         bool asyncInference = true;            // 是否异步推理
@@ -145,10 +121,8 @@ public:
         bool enableFramePreprocessing = true;  // 是否启用帧预处理
         bool onlyProcessColorFrames = true;    // 是否只处理彩色帧
         
-        bool validate() const {
-            return inferenceInterval > 0 && defaultThreshold >= 0.0f && 
-                   defaultThreshold <= 1.0f && maxQueueSize > 0;
-        }
+        bool validate() const;
+        bool isValid() const; // 兼容 InferenceManager 的命名
     } inferenceConfig;
 
     // 相机标定配置
@@ -166,143 +140,50 @@ public:
         bool autoStartCalibrationOnStartup = false; // 启动时自动开始标定
         bool showCalibrationProgress = true;    // 显示标定进度
         
-        bool validate() const {
-            return boardWidth > 0 && boardHeight > 0 && squareSize > 0 && 
-                   minValidFrames > 0 && maxFrames >= minValidFrames && minInterval > 0;
-        }
+        bool validate() const;
     } calibrationConfig;
 
-    /**
-     * @brief 确保目录存在，并规范化路径
-     * @param path 需要检查和创建的目录路径
-     * @param addTrailingSlash 是否确保路径末尾有斜杠
-     * @return 规范化后的路径，如果创建失败则返回空字符串
-     */
-    static std::string ensureDirectoryExists(const std::string& path, bool addTrailingSlash = true) {
-        try {
-            if(path.empty()) {
-                LOG_ERROR("Path is empty");
-                return "";
-            }
-            
-            // 规范化路径
-            std::string normPath = path;
-            
-            // 确保路径末尾有斜杠（如果需要）
-            if(addTrailingSlash && !normPath.empty() && normPath.back() != '/') {
-                normPath += '/';
-            }
-            
-            // 创建目录（如果不存在）
-            if(!std::filesystem::exists(normPath)) {
-                if(std::filesystem::create_directories(normPath)) {
-                    LOG_INFO("Directory created: ", normPath);
-                } else {
-                    LOG_ERROR("Failed to create directory: ", normPath);
-                    return "";
-                }
-            }
-            
-            return normPath;
-        }
-        catch(const std::exception& e) {
-            LOG_ERROR("Error processing directory: ", e.what());
-            return "";
-        }
-    }
+    // 日志系统配置 - 简化版本
+    struct LoggerConfig {
+        Logger::Level logLevel = Logger::Level::INFO;  // 日志级别
+        bool enableConsole = true;                      // 是否启用控制台输出
+        bool enableFileLogging = true;                  // 是否启用文件日志
+        std::string logDirectory = "logs/";             // 日志目录
+        
+        bool validate() const;
+    } loggerConfig;
 
     /**
-     * @brief 确保保存目录存在
-     * @return 如果目录存在或创建成功则返回true
+     * @brief 初始化日志系统
      */
-    bool ensureSaveDirectoryExists() {
-        std::string normPath = ensureDirectoryExists(saveConfig.dumpPath);
-        if(!normPath.empty()) {
-            saveConfig.dumpPath = normPath;
-            return true;
-        }
-        return false;
-    }
+    bool initializeLogger();
+
+    /**
+     * @brief 快速配置日志系统
+     * @param level 日志级别
+     * @param enableFile 是否启用文件日志  
+     */
+    void configureLogger(Logger::Level level = Logger::Level::INFO, 
+                        bool enableFile = true);
 
     /**
      * @brief 验证所有配置的有效性
      * @return true if all configurations are valid
      */
-    bool validateAll() const {
-        return streamConfig.validate() && 
-               renderConfig.validate() && 
-               saveConfig.validate() && 
-               metadataConfig.validate() && 
-               hotPlugConfig.validate() && 
-               debugConfig.validate() &&
-               parallelConfig.validate() &&
-               inferenceConfig.validate() &&
-               calibrationConfig.validate();
-    }
+    bool validateAll() const;
 
     /**
      * @brief 打印当前配置
      */
-    void printConfig() const {
-        LOG_INFO("=== Current Configuration ===");
-        LOG_INFO("Stream: Color=", streamConfig.enableColor, 
-                 ", Depth=", streamConfig.enableDepth, 
-                 ", IR=", streamConfig.enableIR,
-                 ", IR_Left=", streamConfig.enableIRLeft,
-                 ", IR_Right=", streamConfig.enableIRRight,
-                 ", IMU=", streamConfig.enableIMU);
-        LOG_INFO("Render: ", renderConfig.windowWidth, "x", renderConfig.windowHeight, 
-                 ", Title=", renderConfig.windowTitle);
-        LOG_INFO("Save: Enabled=", saveConfig.enableDump,
-                 ", Color=", saveConfig.saveColor,
-                 ", Depth=", saveConfig.saveDepth,
-                 ", IR=", saveConfig.saveIR,
-                 ", Interval=", saveConfig.frameInterval);
-        LOG_INFO("HotPlug: Enabled=", hotPlugConfig.enableHotPlug, 
-                 ", AutoReconnect=", hotPlugConfig.autoReconnect, 
-                 ", MaxAttempts=", hotPlugConfig.maxReconnectAttempts);
-        LOG_INFO("Debug: Level=", debugConfig.logLevel, 
-                 ", Performance=", debugConfig.enablePerformanceStats);
-        LOG_INFO("Parallel: Enabled=", parallelConfig.enableParallelProcessing, 
-                 ", ThreadPoolSize=", parallelConfig.threadPoolSize, 
-                 ", MaxQueuedTasks=", parallelConfig.maxQueuedTasks);
-        LOG_INFO("Inference: Enabled=", inferenceConfig.enableInference,
-                 ", DefaultModel=", inferenceConfig.defaultModel,
-                 ", DefaultModelType=", inferenceConfig.defaultModelType,
-                 ", DefaultThreshold=", inferenceConfig.defaultThreshold);
-        LOG_INFO("Calibration: Enabled=", calibrationConfig.enableCalibration,
-                 ", BoardWidth=", calibrationConfig.boardWidth,
-                 ", BoardHeight=", calibrationConfig.boardHeight,
-                 ", SquareSize=", calibrationConfig.squareSize,
-                 ", MinValidFrames=", calibrationConfig.minValidFrames,
-                 ", MaxFrames=", calibrationConfig.maxFrames,
-                 ", MinInterval=", calibrationConfig.minInterval);
-        LOG_INFO("============================");
-    }
+    void printConfig() const;
 
     /**
      * @brief 重置为默认配置
      */
-    void resetToDefaults() {
-        streamConfig = StreamConfig{};
-        renderConfig = RenderConfig{};
-        saveConfig = SaveConfig{};
-        metadataConfig = MetadataConfig{};
-        hotPlugConfig = HotPlugConfig{};
-        debugConfig = DebugConfig{};
-        parallelConfig = ParallelConfig{};
-        inferenceConfig = InferenceConfig{};
-        calibrationConfig = CalibrationConfig{};
-    }
+    void resetToDefaults();
 
 private:
-    ConfigHelper() {
-        // 构造函数中可以进行额外的初始化
-        if(!validateAll()) {
-            LOG_WARN("Warning: Default configuration validation failed!");
-        }
-    }
-    
+    ConfigHelper();
     ~ConfigHelper() = default;
     ConfigHelper(const ConfigHelper&) = delete;
     ConfigHelper& operator=(const ConfigHelper&) = delete;

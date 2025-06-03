@@ -15,29 +15,12 @@
 #include "libobsensor/ObSensor.hpp"
 #include "InferenceBase.hpp"
 #include "Logger.hpp"
+#include "ConfigHelper.hpp"
 
 namespace inference {
 
-/**
- * @brief 推理配置结构，扩展ConfigHelper
- */
-struct InferenceConfig {
-    bool enableInference = false;           // 是否启用推理
-    std::string defaultModel = "";          // 默认模型路径
-    std::string defaultModelType = "";      // 默认模型类型
-    float defaultThreshold = 0.5f;          // 默认置信度阈值
-    bool enableVisualization = true;       // 是否启用可视化
-    bool enablePerformanceStats = true;    // 是否启用性能统计
-    int inferenceInterval = 1;             // 推理间隔（每N帧推理一次）
-    std::string classNamesFile = "";       // 类别名称文件路径
-    bool asyncInference = true;            // 是否异步推理
-    int maxQueueSize = 10;                 // 异步推理队列最大大小
-    bool onlyProcessColorFrames = true;    // 是否只处理彩色帧
-    
-    bool isValid() const {
-        return inferenceInterval > 0 && defaultThreshold >= 0.0f && defaultThreshold <= 1.0f;
-    }
-};
+// 使用 ConfigHelper 中的 InferenceConfig
+using InferenceConfig = ConfigHelper::InferenceConfig;
 
 /**
  * @brief 推理回调函数类型

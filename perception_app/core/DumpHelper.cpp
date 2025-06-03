@@ -17,6 +17,32 @@ DumpHelper::DumpHelper() {
     formatConverter_ = std::make_shared<ob::FormatConvertFilter>();
 }
 
+bool DumpHelper::initializeSavePath() {
+    auto& config = ConfigHelper::getInstance();
+    
+    // 只有在启用数据保存时才检查路径
+    if (!config.saveConfig.enableDump) {
+        LOG_DEBUG("Data saving disabled, skipping path initialization");
+        return true;
+    }
+    
+    // 使用Logger的ensureDirectoryExists来创建目录
+    std::string normalizedPath = Logger::ensureDirectoryExists(config.saveConfig.dumpPath, true);
+    
+    if (normalizedPath.empty()) {
+        LOG_ERROR("Failed to create or access dump directory: ", config.saveConfig.dumpPath);
+        LOG_ERROR("Disabling data dump to prevent further errors");
+        config.saveConfig.enableDump = false;
+        return false;
+    }
+    
+    // 更新配置中的路径为规范化后的路径
+    config.saveConfig.dumpPath = normalizedPath;
+    
+    LOG_INFO("Data save path initialized: ", normalizedPath);
+    return true;
+}
+
 std::string DumpHelper::generateTimeStamp() {
     // Generate unified timestamp
     auto timestamp = std::chrono::system_clock::now();
@@ -39,8 +65,8 @@ void DumpHelper::saveFrame(std::shared_ptr<ob::Frame> frame, const std::string& 
     if(!frame) return;
 
     try {
-        // Use ConfigHelper to ensure directory exists
-        std::string normPath = ConfigHelper::ensureDirectoryExists(path);
+        // Use Logger to ensure directory exists
+        std::string normPath = Logger::ensureDirectoryExists(path);
         if(normPath.empty()) {
             LOG_ERROR("Failed to create or access directory: ", path);
             return;
@@ -49,38 +75,30 @@ void DumpHelper::saveFrame(std::shared_ptr<ob::Frame> frame, const std::string& 
         // Get config to check which frame types to save
         auto& config = ConfigHelper::getInstance();
         
-        // Generate unified timestamp
-        auto timeStamp = std::to_string(frame->timeStamp());
-        
-        // 获取帧类型名称用于日志
-        std::string frameTypeName = ob::TypeHelper::convertOBFrameTypeToString(frame->type());
-        
         // Save based on frame type
         bool frameSaved = false;
         
-        if(frame->type() == OB_FRAME_COLOR && config.saveConfig.saveColor) {
-            LOG_DEBUG("Saving ", frameTypeName, " frame, index: ", frame->index());
-            saveColorFrame(frame->as<ob::ColorFrame>(), normPath, timeStamp);
+        if(frame->type() == OB_FRAME_COLOR && config.saveConfig.saveColor && config.streamConfig.enableColor) {
+            saveColorFrame(frame->as<ob::ColorFrame>(), normPath);
             frameSaved = true;
         }
-        else if(frame->type() == OB_FRAME_DEPTH && config.saveConfig.saveDepth) {
-            LOG_DEBUG("Saving ", frameTypeName, " frame, index: ", frame->index());
-            saveDepthFrame(frame->as<ob::DepthFrame>(), normPath, timeStamp);
+        else if(frame->type() == OB_FRAME_DEPTH && config.saveConfig.saveDepth && config.streamConfig.enableDepth) {
+            saveDepthFrame(frame->as<ob::DepthFrame>(), normPath);
             frameSaved = true;
         }
-        else if(is_ir_frame(frame->type()) && config.saveConfig.saveIR) {
-            LOG_DEBUG("Saving ", frameTypeName, " frame, index: ", frame->index());
-            saveIRFrame(frame, normPath, timeStamp);
+        else if(is_ir_frame(frame->type()) && config.saveConfig.saveIR && 
+                (config.streamConfig.enableIR || config.streamConfig.enableIRLeft || config.streamConfig.enableIRRight)) {
+            saveIRFrame(frame, normPath);
             frameSaved = true;
         }
-        else if(frame->type() == OB_FRAME_ACCEL || frame->type() == OB_FRAME_GYRO) {
-            LOG_DEBUG("Saving ", frameTypeName, " frame, index: ", frame->index());
-            saveIMUFrame(frame, normPath, timeStamp);
+        else if((frame->type() == OB_FRAME_ACCEL || frame->type() == OB_FRAME_GYRO) && config.streamConfig.enableIMU) {
+            saveIMUFrame(frame, normPath);
             frameSaved = true;
         }
         
         if(!frameSaved) {
-            LOG_DEBUG("Frame type ", frameTypeName, " (", static_cast<int>(frame->type()), ") not saved");
+            std::string frameTypeName = ob::TypeHelper::convertOBFrameTypeToString(frame->type());
+            LOG_DEBUG("Frame type ", frameTypeName, " (", static_cast<int>(frame->type()), ") not saved - stream disabled or save option disabled");
         }
     }
     catch(const std::exception& e) {
@@ -121,14 +139,34 @@ bool DumpHelper::saveImageFrame(const std::shared_ptr<ob::VideoFrame> videoFrame
     }
     
     try {
-        // 创建文件路径
-        std::string filePath = createFilePath(path, timeStamp, frameTypeName);
-        
-        // 获取PNG保存参数
-        auto params = createPNGParams();
-        
         // 创建OpenCV Mat
         cv::Mat imageMat(videoFrame->height(), videoFrame->width(), cvMatType, videoFrame->data());
+        
+        // 调用Mat版本的saveImageFrame来实际保存图像
+        return saveImageFrame(imageMat, path, timeStamp, frameTypeName);
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR("Error saving image frame: ", e.what());
+        return false;
+    }
+}
+
+bool DumpHelper::saveImageFrame(const cv::Mat& imageMat,
+                               const std::string& path,
+                               const std::string& timeStamp,
+                               const std::string& frameTypeName,
+                               const std::string& extension) {
+    if (imageMat.empty()) {
+        LOG_ERROR("Invalid image matrix");
+        return false;
+    }
+    
+    try {
+        // 创建文件路径
+        std::string filePath = createFilePath(path, timeStamp, frameTypeName, extension);
+        
+        // 获取保存参数
+        auto params = createPNGParams();
         
         // 保存图像
         if (cv::imwrite(filePath, imageMat, params)) {
@@ -145,20 +183,90 @@ bool DumpHelper::saveImageFrame(const std::shared_ptr<ob::VideoFrame> videoFrame
     }
 }
 
-void DumpHelper::saveDepthFrame(const std::shared_ptr<ob::DepthFrame> depthFrame, 
-                               const std::string& path, const std::string& timeStamp) {
+cv::Mat DumpHelper::createDepthColormap(const std::shared_ptr<ob::DepthFrame> depthFrame) {
+    if (!depthFrame) {
+        return cv::Mat();
+    }
+    
+    try {
+        // 参考utils_opencv.cpp中的深度图像处理逻辑
+        cv::Mat rawMat = cv::Mat(depthFrame->height(), depthFrame->width(), CV_16UC1, depthFrame->data());
+        
+        // depth frame pixel value multiply scale to get distance in millimeter
+        float scale = depthFrame->getValueScale();
+
+        cv::Mat cvtMat;
+        // normalization to 0-255. 0.032f is 256/8000, to limit the range of depth to 8000mm
+        rawMat.convertTo(cvtMat, CV_32F, scale * 0.032f);
+
+        // apply gamma correction to enhance the contrast for near objects
+        cv::pow(cvtMat, 0.6f, cvtMat);
+
+        //  convert to 8-bit
+        cvtMat.convertTo(cvtMat, CV_8UC1, 10);  // multiplier 10 is to normalize to 0-255 (nearly) after applying gamma correction
+
+        // apply colormap
+        cv::Mat colormapMat;
+        cv::applyColorMap(cvtMat, colormapMat, cv::COLORMAP_JET);
+        
+        return colormapMat;
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR("Error creating depth colormap: ", e.what());
+        return cv::Mat();
+    }
+}
+
+void DumpHelper::saveDepthColormapFrame(const std::shared_ptr<ob::DepthFrame> depthFrame,
+                                        const std::string& path) {
     if (!depthFrame) return;
+    
+    try {
+        // 生成时间戳
+        std::string timeStamp = std::to_string(depthFrame->timeStamp());
+        
+        // 获取帧类型名称
+        std::string frameTypeName = ob::TypeHelper::convertOBFrameTypeToString(depthFrame->type());
+        
+        // 创建深度colormap
+        cv::Mat colormapMat = createDepthColormap(depthFrame);
+        if (!colormapMat.empty()) {
+            // 使用通用图像保存方法保存colormap
+            saveImageFrame(colormapMat, path, timeStamp, frameTypeName + "_colormap");
+        }
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR("Error saving depth colormap: ", e.what());
+    }
+}
+
+void DumpHelper::saveDepthFrame(const std::shared_ptr<ob::DepthFrame> depthFrame, 
+                               const std::string& path) {
+    if (!depthFrame) return;
+    
+    // 生成时间戳
+    std::string timeStamp = std::to_string(depthFrame->timeStamp());
     
     // 获取帧类型名称
     std::string frameTypeName = ob::TypeHelper::convertOBFrameTypeToString(depthFrame->type());
     
-    // 使用通用方法保存
+    // 保存原始深度图像
     saveImageFrame(depthFrame, path, timeStamp, frameTypeName, CV_16UC1);
+
+    // 如果启用了colormap保存，则额外保存一份colormap版本
+    auto& config = ConfigHelper::getInstance();
+
+    if (config.saveConfig.saveDepthColormap) {
+        saveDepthColormapFrame(depthFrame, path);
+    }
 }
 
 void DumpHelper::saveColorFrame(std::shared_ptr<ob::ColorFrame> colorFrame, 
-                               const std::string& path, const std::string& timeStamp) {
+                               const std::string& path) {
     if (!colorFrame) return;
+    
+    // 生成时间戳
+    std::string timeStamp = std::to_string(colorFrame->timeStamp());
     
     // 获取帧类型名称
     std::string frameTypeName = ob::TypeHelper::convertOBFrameTypeToString(colorFrame->type());
@@ -197,8 +305,11 @@ void DumpHelper::saveColorFrame(std::shared_ptr<ob::ColorFrame> colorFrame,
 }
 
 void DumpHelper::saveIRFrame(std::shared_ptr<ob::Frame> irFrame, 
-                            const std::string& path, const std::string& timeStamp) {
+                            const std::string& path) {
     if (!irFrame) return;
+    
+    // 生成时间戳
+    std::string timeStamp = std::to_string(irFrame->timeStamp());
     
     // 获取IR类型名称
     std::string irTypeName = ob::TypeHelper::convertOBFrameTypeToString(irFrame->type());
@@ -234,8 +345,13 @@ void DumpHelper::saveIRFrame(std::shared_ptr<ob::Frame> irFrame,
 }
 
 void DumpHelper::saveIMUFrame(const std::shared_ptr<ob::Frame> frame, 
-                             const std::string& path, const std::string& timeStamp) {
+                             const std::string& path) {
     if (!frame) return;
+    
+    LOG_DEBUG("Saving IMU frame, index: ", frame->index());
+    
+    // 生成时间戳
+    std::string timeStamp = std::to_string(frame->timeStamp());
     
     // 获取帧类型名称
     std::string frameTypeName = ob::TypeHelper::convertOBFrameTypeToString(frame->type());

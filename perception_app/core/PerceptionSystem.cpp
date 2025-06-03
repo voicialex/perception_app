@@ -157,18 +157,8 @@ bool PerceptionSystem::initializeInferenceSystem() {
     try {
         auto& inferenceManager = getInferenceManager();
         
-        // 创建推理配置
-        inference::InferenceConfig inferenceConfig;
-        inferenceConfig.enableInference = config.inferenceConfig.enableInference;
-        inferenceConfig.defaultModel = config.inferenceConfig.defaultModel;
-        inferenceConfig.defaultModelType = config.inferenceConfig.defaultModelType;
-        inferenceConfig.defaultThreshold = config.inferenceConfig.defaultThreshold;
-        inferenceConfig.enableVisualization = config.inferenceConfig.enableVisualization;
-        inferenceConfig.enablePerformanceStats = config.inferenceConfig.enablePerformanceStats;
-        inferenceConfig.inferenceInterval = config.inferenceConfig.inferenceInterval;
-        inferenceConfig.classNamesFile = config.inferenceConfig.classNamesFile;
-        inferenceConfig.asyncInference = config.inferenceConfig.asyncInference;
-        inferenceConfig.maxQueueSize = config.inferenceConfig.maxQueueSize;
+        // 获取全局推理配置并进行必要的调整
+        auto inferenceConfig = config.inferenceConfig;
         
         // 设置推理回调
         inferenceManager.setInferenceCallback(
@@ -263,8 +253,7 @@ void PerceptionSystem::handleInferenceResult(const std::string& modelName,
     
     auto& config = ConfigHelper::getInstance();
     
-    if (config.inferenceConfig.enablePerformanceStats && 
-        config.debugConfig.enableDebugOutput) {
+    if (config.inferenceConfig.enablePerformanceStats) {
         LOG_DEBUG("Inference result for ", modelName, ": ", result->getSummary(), 
                   ", time: ", result->getInferenceTime(), " ms");
     }

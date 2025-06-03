@@ -16,8 +16,12 @@ set(HEADERS
 add_library(ob_perception_utils STATIC
     ${CMAKE_CURRENT_LIST_DIR}/utils_c.c
     ${CMAKE_CURRENT_LIST_DIR}/utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Logger.cpp
     ${HEADERS}
 )
+
+# 添加spdlog依赖
+target_link_libraries(ob_perception_utils PUBLIC spdlog::spdlog)
 
 if(${OpenCV_FOUND})
     target_sources(ob_perception_utils PRIVATE
@@ -26,6 +30,9 @@ if(${OpenCV_FOUND})
     )
     target_link_libraries(ob_perception_utils PUBLIC ${OpenCV_LIBS} ob::OrbbecSDK)
     target_include_directories(ob_perception_utils PUBLIC ${OpenCV_INCLUDE_DIRS})
+    
+    # 定义HAS_OBSENSOR宏，表示ObSensor功能可用
+    target_compile_definitions(ob_perception_utils PUBLIC HAS_OBSENSOR)
 endif()
 
 find_package(Threads REQUIRED)

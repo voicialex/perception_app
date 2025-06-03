@@ -11,9 +11,6 @@ int main(int argc, char* argv[]) {
     (void)argc; // 避免未使用参数警告
     (void)argv; // 避免未使用参数警告
     
-    // 初始化日志系统
-    Logger::getInstance().setLevel("INFO");
-    
     LOG_INFO("推理演示程序启动");
     
     try {
@@ -33,14 +30,7 @@ int main(int argc, char* argv[]) {
         auto& inferenceManager = inference::InferenceManager::getInstance();
         
         // 初始化推理系统
-        inference::InferenceConfig inferenceConfig;
-        inferenceConfig.enableInference = true;
-        inferenceConfig.defaultModel = "demo_model.onnx";
-        inferenceConfig.defaultModelType = "classification";
-        inferenceConfig.defaultThreshold = 0.5f;
-        inferenceConfig.enableVisualization = true;
-        inferenceConfig.enablePerformanceStats = true;
-        inferenceConfig.asyncInference = false;
+        auto inferenceConfig = config.inferenceConfig;
         
         if (!inferenceManager.initialize(inferenceConfig)) {
             LOG_ERROR("推理管理器初始化失败");
