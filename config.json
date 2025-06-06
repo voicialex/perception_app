@@ -1,0 +1,95 @@
+{
+  "stream": {
+    "enableColor": true,
+    "enableDepth": true,
+    "enableIR": true,
+    "enableIRLeft": true,
+    "enableIRRight": true,
+    "enableIMU": false,
+    "colorWidth": 1280,
+    "colorHeight": 720,
+    "colorFPS": 30,
+    "depthWidth": 1280,
+    "depthHeight": 720,
+    "depthFPS": 30
+  },
+  "render": {
+    "enableRendering": true,
+    "windowWidth": 1280,
+    "windowHeight": 720,
+    "showFPS": true,
+    "autoResize": true,
+    "windowTitle": "相机感知应用"
+  },
+  "save": {
+    "enableDump": false,
+    "dumpPath": "./dumps/",
+    "saveColor": true,
+    "saveDepth": true,
+    "saveDepthColormap": false,
+    "saveIR": true,
+    "savePointCloud": false,
+    "imageFormat": "png",
+    "maxFramesToSave": 1000,
+    "frameInterval": 100,
+    "enableFrameStats": false
+  },
+  "metadata": {
+    "enableMetadata": false,
+    "printInterval": 300,
+    "showTimestamp": true,
+    "showFrameNumber": true,
+    "showDeviceInfo": true,
+    "enableTimingInfo": false,
+    "statsInterval": 30
+  },
+  "hotplug": {
+    "enableHotPlug": true,
+    "autoReconnect": true,
+    "printDeviceEvents": true,
+    "reconnectDelayMs": 1000,
+    "maxReconnectAttempts": 30,
+    "deviceStabilizeDelayMs": 500,
+    "waitForDeviceOnStartup": true
+  },
+  "parallel": {
+    "enableParallelProcessing": true,
+    "threadPoolSize": 4,
+    "maxQueuedTasks": 100
+  },
+  "inference": {
+    "enableInference": false,
+    "defaultModel": "",
+    "defaultModelType": "",
+    "defaultThreshold": 0.5,
+    "enableVisualization": true,
+    "enablePerformanceStats": false,
+    "inferenceInterval": 1,
+    "classNamesFile": "",
+    "asyncInference": true,
+    "maxQueueSize": 10,
+    "modelsDirectory": "./models/",
+    "enableFramePreprocessing": true,
+    "onlyProcessColorFrames": true
+  },
+  "calibration": {
+    "enableCalibration": false,
+    "boardWidth": 9,
+    "boardHeight": 6,
+    "squareSize": 1.0,
+    "minValidFrames": 20,
+    "maxFrames": 50,
+    "minInterval": 1.0,
+    "useSubPixel": true,
+    "enableUndistortion": true,
+    "saveDirectory": "./calibration/",
+    "autoStartCalibrationOnStartup": false,
+    "showCalibrationProgress": true
+  },
+  "logger": {
+    "logLevel": 1,
+    "enableConsole": true,
+    "enableFileLogging": true,
+    "logDirectory": "logs/"
+  }
+} 

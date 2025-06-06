@@ -1,2 +1,0 @@
-/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-ar qc output/lib/libcom.a CMakeFiles/com.dir/src/session/session.cc.o CMakeFiles/com.dir/src/transport/serial_transport.cc.o
-/opt/FriendlyARM/toolchain/6.4-aarch64/bin/aarch64-linux-gnu-ranlib output/lib/libcom.a
