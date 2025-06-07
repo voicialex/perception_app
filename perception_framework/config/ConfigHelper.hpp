@@ -25,9 +25,9 @@ public:
     struct StreamConfig {
         bool enableColor = true;             // 启用彩色流
         bool enableDepth = true;             // 启用深度流
-        bool enableIR = true;               // 启用红外流
-        bool enableIRLeft = true;           // 启用左红外流
-        bool enableIRRight = true;          // 启用右红外流
+        bool enableIR = true;                // 启用红外流
+        bool enableIRLeft = true;            // 启用左红外流
+        bool enableIRRight = true;           // 启用右红外流
         bool enableIMU = false;              // 启用IMU数据流
         
         // 流质量配置
@@ -59,12 +59,13 @@ public:
         std::string dumpPath = "./dumps/";   // 保存路径
         bool saveColor = true;               // 保存彩色图像
         bool saveDepth = true;               // 保存深度图像
-        bool saveDepthColormap = false;      // 保存深度图像的colormap版本
+        bool saveDepthColormap = true;       // 保存深度图像的colormap版本
+        bool saveDepthData = true;           // 保存深度数据的纯数字格式(CSV)
         bool saveIR = true;                  // 保存红外图像
         bool savePointCloud = false;         // 保存点云数据
         std::string imageFormat = "png";     // 图像格式
         int maxFramesToSave = 1000;          // 最大保存帧数
-        int frameInterval = 100;              // 保存帧间隔（每N帧保存一帧，值越大保存频率越低）
+        int frameInterval = 100;             // 保存帧间隔（每N帧保存一帧，值越大保存频率越低）
         bool enableFrameStats = false;       // 启用帧统计信息
         
         bool validate() const;
@@ -107,19 +108,19 @@ public:
 
     // 推理配置
     struct InferenceConfig {
-        bool enableInference = false;           // 是否启用推理
-        std::string defaultModel = "";          // 默认模型路径
-        std::string defaultModelType = "";      // 默认模型类型
-        float defaultThreshold = 0.5f;          // 默认置信度阈值
-        bool enableVisualization = true;       // 是否启用可视化
-        bool enablePerformanceStats = false;   // 是否启用性能统计
-        int inferenceInterval = 1;             // 推理间隔（每N帧推理一次）
-        std::string classNamesFile = "";       // 类别名称文件路径
-        bool asyncInference = true;            // 是否异步推理
-        int maxQueueSize = 10;                 // 异步推理队列最大大小
+        bool enableInference = false;              // 是否启用推理
+        std::string defaultModel = "";             // 默认模型路径
+        std::string defaultModelType = "";         // 默认模型类型
+        float defaultThreshold = 0.5f;             // 默认置信度阈值
+        bool enableVisualization = true;           // 是否启用可视化
+        bool enablePerformanceStats = false;       // 是否启用性能统计
+        int inferenceInterval = 1;                 // 推理间隔（每N帧推理一次）
+        std::string classNamesFile = "";           // 类别名称文件路径
+        bool asyncInference = true;                // 是否异步推理
+        int maxQueueSize = 10;                     // 异步推理队列最大大小
         std::string modelsDirectory = "./models/"; // 模型目录
-        bool enableFramePreprocessing = true;  // 是否启用帧预处理
-        bool onlyProcessColorFrames = true;    // 是否只处理彩色帧
+        bool enableFramePreprocessing = true;      // 是否启用帧预处理
+        bool onlyProcessColorFrames = true;        // 是否只处理彩色帧
         
         bool validate() const;
         bool isValid() const; // 兼容 InferenceManager 的命名
@@ -127,25 +128,25 @@ public:
 
     // 相机标定配置
     struct CalibrationConfig {
-        bool enableCalibration = false;         // 是否启用标定功能
-        int boardWidth = 9;                     // 棋盘宽度（内角点数）
-        int boardHeight = 6;                    // 棋盘高度（内角点数）
-        float squareSize = 1.0f;                // 方格大小（实际物理尺寸，单位：mm）
-        int minValidFrames = 20;                // 最少需要的有效帧数
-        int maxFrames = 50;                     // 最大采集帧数
-        double minInterval = 1.0;               // 采集间隔（秒）
-        bool useSubPixel = true;                // 是否使用亚像素精度
-        bool enableUndistortion = true;         // 是否启用去畸变
+        bool enableCalibration = false;               // 是否启用标定功能
+        int boardWidth = 9;                           // 棋盘宽度（内角点数）
+        int boardHeight = 6;                          // 棋盘高度（内角点数）
+        float squareSize = 1.0f;                      // 方格大小（实际物理尺寸，单位：mm）
+        int minValidFrames = 20;                      // 最少需要的有效帧数
+        int maxFrames = 50;                           // 最大采集帧数
+        double minInterval = 1.0;                     // 采集间隔（秒）
+        bool useSubPixel = true;                      // 是否使用亚像素精度
+        bool enableUndistortion = true;               // 是否启用去畸变
         std::string saveDirectory = "./calibration/"; // 保存目录
-        bool autoStartCalibrationOnStartup = false; // 启动时自动开始标定
-        bool showCalibrationProgress = true;    // 显示标定进度
+        bool autoStartCalibrationOnStartup = false;   // 启动时自动开始标定
+        bool showCalibrationProgress = true;          // 显示标定进度
         
         bool validate() const;
     } calibrationConfig;
 
     // 日志系统配置 - 简化版本
     struct LoggerConfig {
-        Logger::Level logLevel = Logger::Level::INFO;  // 日志级别
+        Logger::Level logLevel = Logger::Level::INFO;   // 日志级别
         bool enableConsole = true;                      // 是否启用控制台输出
         bool enableFileLogging = true;                  // 是否启用文件日志
         std::string logDirectory = "logs/";             // 日志目录

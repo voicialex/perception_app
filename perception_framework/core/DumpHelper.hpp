@@ -43,6 +43,10 @@ private:
     void saveDepthColormapFrame(const std::shared_ptr<ob::DepthFrame> depthFrame,
                                const std::string& path);
     
+    // 保存深度数据的纯数字格式（CSV格式）
+    void saveDepthDataFrame(const std::shared_ptr<ob::DepthFrame> depthFrame,
+                           const std::string& path);
+    
     // 保存彩色帧
     void saveColorFrame(std::shared_ptr<ob::ColorFrame> colorFrame, 
                        const std::string& path);

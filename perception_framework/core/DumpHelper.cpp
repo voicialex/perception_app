@@ -240,6 +240,64 @@ void DumpHelper::saveDepthColormapFrame(const std::shared_ptr<ob::DepthFrame> de
     }
 }
 
+void DumpHelper::saveDepthDataFrame(const std::shared_ptr<ob::DepthFrame> depthFrame,
+                                   const std::string& path) {
+    if (!depthFrame) return;
+    
+    try {
+        // 生成时间戳
+        std::string timeStamp = std::to_string(depthFrame->timeStamp());
+        
+        // 获取帧类型名称
+        std::string frameTypeName = ob::TypeHelper::convertOBFrameTypeToString(depthFrame->type());
+        
+        // 创建文件路径（使用.csv扩展名）
+        std::string filePath = createFilePath(path, timeStamp, frameTypeName + "_data", ".csv");
+        
+        // 获取深度数据
+        const uint16_t* depthData = reinterpret_cast<const uint16_t*>(depthFrame->data());
+        int width = depthFrame->width();
+        int height = depthFrame->height();
+        float scale = depthFrame->getValueScale();
+        
+        // 保存为CSV格式
+        std::ofstream file(filePath);
+        if (file.is_open()) {
+            // 写入头部信息
+            file << "# Depth Data Frame\n";
+            file << "# Timestamp: " << depthFrame->timeStamp() << " ms\n";
+            file << "# Frame Index: " << depthFrame->index() << "\n";
+            file << "# Resolution: " << width << "x" << height << "\n";
+            file << "# Scale Factor: " << scale << " (mm/unit)\n";
+            file << "# Format: X,Y,Depth_Raw,Depth_mm\n";
+            file << "# X: column index (0-" << (width-1) << ")\n";
+            file << "# Y: row index (0-" << (height-1) << ")\n";
+            file << "# Depth_Raw: raw depth value from sensor\n";
+            file << "# Depth_mm: depth in millimeters (Raw * Scale)\n";
+            file << "X,Y,Depth_Raw,Depth_mm\n";
+            
+            // 写入深度数据
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    uint16_t rawDepth = depthData[y * width + x];
+                    if (rawDepth > 0) { // 只保存有效深度值
+                        float depthMm = rawDepth * scale;
+                        file << x << "," << y << "," << rawDepth << "," << depthMm << "\n";
+                    }
+                }
+            }
+            
+            file.close();
+            LOG_DEBUG(frameTypeName, " depth data saved successfully: ", filePath);
+        } else {
+            LOG_ERROR("Failed to create ", frameTypeName, " depth data file: ", filePath);
+        }
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR("Error saving depth data frame: ", e.what());
+    }
+}
+
 void DumpHelper::saveDepthFrame(const std::shared_ptr<ob::DepthFrame> depthFrame, 
                                const std::string& path) {
     if (!depthFrame) return;
@@ -258,6 +316,11 @@ void DumpHelper::saveDepthFrame(const std::shared_ptr<ob::DepthFrame> depthFrame
 
     if (config.saveConfig.saveDepthColormap) {
         saveDepthColormapFrame(depthFrame, path);
+    }
+
+    // 如果启用了深度数据保存，则额外保存一份深度数据版本
+    if (config.saveConfig.saveDepthData) {
+        saveDepthDataFrame(depthFrame, path);
     }
 }
 
