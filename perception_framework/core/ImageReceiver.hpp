@@ -20,8 +20,8 @@
 #include "ConfigHelper.hpp"
 #include "utils.hpp"
 #include "utils_opencv.hpp"
-#include "MetadataHelper.hpp"
 #include "DumpHelper.hpp"
+#include "MetadataHelper.hpp"
 #include "DeviceManager.hpp"
 #include "ThreadPool.hpp"
 
@@ -174,6 +174,9 @@ private:
 
     // 并行处理
     void processFrameSetParallel(std::shared_ptr<ob::FrameSet> frameset);
+    
+    // 串行处理
+    void processFrameSetSerial(std::shared_ptr<ob::FrameSet> frameset);
 
     // 清理已完成的任务
     void cleanupCompletedTasks();

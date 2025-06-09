@@ -27,21 +27,20 @@
     "saveColor": true,
     "saveDepth": true,
     "saveDepthColormap": false,
+    "saveDepthData": true,
     "saveIR": true,
     "savePointCloud": false,
+    "saveMetadata": true,
+    "enableMetadataConsole": false,
     "imageFormat": "png",
     "maxFramesToSave": 1000,
     "frameInterval": 100,
     "enableFrameStats": false
   },
   "metadata": {
-    "enableMetadata": false,
-    "printInterval": 300,
     "showTimestamp": true,
     "showFrameNumber": true,
-    "showDeviceInfo": true,
-    "enableTimingInfo": false,
-    "statsInterval": 30
+    "showDeviceInfo": true
   },
   "hotplug": {
     "enableHotPlug": true,

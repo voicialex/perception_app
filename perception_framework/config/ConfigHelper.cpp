@@ -28,7 +28,8 @@ bool ConfigHelper::SaveConfig::validate() const {
 }
 
 bool ConfigHelper::MetadataConfig::validate() const {
-    return printInterval > 0 && statsInterval > 0;
+    // MetadataConfig 现在只包含显示格式选项，无需特殊验证
+    return true;
 }
 
 bool ConfigHelper::HotPlugConfig::validate() const {
@@ -114,12 +115,13 @@ void ConfigHelper::printConfig() const {
              ", Color=", saveConfig.saveColor,
              ", Depth=", saveConfig.saveDepth,
              ", IR=", saveConfig.saveIR,
+             ", Metadata=", saveConfig.saveMetadata,
+             ", MetadataConsole=", saveConfig.enableMetadataConsole,
              ", Interval=", saveConfig.frameInterval,
              ", FrameStats=", saveConfig.enableFrameStats);
-    LOG_INFO("Metadata: Enabled=", metadataConfig.enableMetadata,
-             ", PrintInterval=", metadataConfig.printInterval,
-             ", TimingInfo=", metadataConfig.enableTimingInfo,
-             ", StatsInterval=", metadataConfig.statsInterval, "s");
+    LOG_INFO("Metadata Format: ShowTimestamp=", metadataConfig.showTimestamp,
+             ", ShowFrameNumber=", metadataConfig.showFrameNumber,
+             ", ShowDeviceInfo=", metadataConfig.showDeviceInfo);
     LOG_INFO("HotPlug: Enabled=", hotPlugConfig.enableHotPlug, 
              ", AutoReconnect=", hotPlugConfig.autoReconnect, 
              ", MaxAttempts=", hotPlugConfig.maxReconnectAttempts);

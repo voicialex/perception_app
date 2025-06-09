@@ -2,10 +2,11 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <functional>
 #include <opencv2/opencv.hpp>
 #include "libobsensor/ObSensor.hpp"
+
+// 前向声明
+class MetadataHelper;
 
 // 简化的格式转换函数声明
 std::string formatName(OBFormat format);
@@ -61,50 +62,37 @@ public:
         bool valid() const { return !basePath.empty(); }
     };
 
-    // 简化：格式转换器
-    class Converter {
-    public:
-        virtual ~Converter() = default;
-        virtual bool supports(OBFormat format) const = 0;
-        virtual cv::Mat convert(std::shared_ptr<ob::VideoFrame> frame) const = 0;
-        virtual std::string fileExt() const { return ".png"; }
-        virtual std::vector<int> saveParams() const;
-    };
-
     static DumpHelper& getInstance();
 
     // 初始化保存路径
     bool initializeSavePath();
 
-    // 保存帧数据
+    // 统一的帧处理接口 - 根据配置自动处理所有相关操作
+    void processFrame(std::shared_ptr<ob::Frame> frame);
+
+    // 保存帧数据 - 简化的统一接口
     void save(std::shared_ptr<ob::Frame> frame, const std::string& path);
+    
+    // 保存元数据到文件（使用 MetadataHelper 组件）
+    void saveMetadata(std::shared_ptr<ob::Frame> frame, const std::string& path);
+    
+    // 显示元数据到控制台（使用 MetadataHelper 组件）
+    void displayMetadata(std::shared_ptr<ob::Frame> frame, int interval);
 
 private:
     DumpHelper();
     ~DumpHelper() = default;
     DumpHelper(const DumpHelper&) = delete;
     DumpHelper& operator=(const DumpHelper&) = delete;
-
-    // 简化：帧保存函数类型
-    using SaveHandler = std::function<void(std::shared_ptr<ob::Frame>, const SaveInfo&)>;
-    std::unordered_map<OBFrameType, SaveHandler> handlers_;
-    
-    // 简化：格式转换器映射
-    std::unordered_map<OBFormat, std::unique_ptr<Converter>> converters_;
-    
-    // 初始化处理器
-    void initHandlers();
-    void initConverters();
     
     // 通用保存方法
     bool saveImage(const cv::Mat& image, const SaveInfo& info, 
-                   const std::string& suffix = "", const std::string& ext = ".png",
-                   const std::vector<int>& params = {});
+                   const std::string& suffix = "", const std::string& ext = ".png");
                    
     bool saveText(const std::string& content, const SaveInfo& info,
                   const std::string& suffix = "", const std::string& ext = ".txt");
     
-    // 具体保存方法
+    // 具体保存方法 - 简化版本
     void saveColor(std::shared_ptr<ob::Frame> frame, const SaveInfo& info);
     void saveDepth(std::shared_ptr<ob::Frame> frame, const SaveInfo& info);
     void saveIR(std::shared_ptr<ob::Frame> frame, const SaveInfo& info);
@@ -116,43 +104,13 @@ private:
     void saveDepthData(std::shared_ptr<ob::DepthFrame> depth, const SaveInfo& info);
     cv::Mat createColormap(std::shared_ptr<ob::DepthFrame> depth);
     
-    // 工具方法
-    cv::Mat processVideo(std::shared_ptr<ob::VideoFrame> video);
-    bool needsConversion(OBFormat format) const;
+    // 简化的工具方法
     bool shouldSave(OBFrameType frameType) const;
-    std::vector<int> defaultParams() const;
+    cv::Mat convertVideoFrame(std::shared_ptr<ob::VideoFrame> frame);
     
     // SDK格式转换器
     std::shared_ptr<ob::FormatConvertFilter> formatFilter_;
-};
-
-// 具体转换器实现 - 使用更简单的命名
-class RGBConverter : public DumpHelper::Converter {
-public:
-    bool supports(OBFormat format) const override;
-    cv::Mat convert(std::shared_ptr<ob::VideoFrame> frame) const override;
-};
-
-class YUVConverter : public DumpHelper::Converter {
-public:
-    bool supports(OBFormat format) const override;
-    cv::Mat convert(std::shared_ptr<ob::VideoFrame> frame) const override;
-};
-
-class JPEGConverter : public DumpHelper::Converter {
-public:
-    bool supports(OBFormat format) const override;
-    cv::Mat convert(std::shared_ptr<ob::VideoFrame> frame) const override;
-};
-
-class DepthConverter : public DumpHelper::Converter {
-public:
-    bool supports(OBFormat format) const override;
-    cv::Mat convert(std::shared_ptr<ob::VideoFrame> frame) const override;
-};
-
-class IRConverter : public DumpHelper::Converter {
-public:
-    bool supports(OBFormat format) const override;
-    cv::Mat convert(std::shared_ptr<ob::VideoFrame> frame) const override;
+    
+    // 元数据处理组件
+    MetadataHelper* metadataHelper_;
 }; 

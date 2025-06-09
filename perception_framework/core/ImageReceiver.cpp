@@ -11,7 +11,6 @@
 #include "libobsensor/hpp/Error.hpp"
 #include "utils.hpp"
 #include "utils_opencv.hpp"
-#include "MetadataHelper.hpp"
 #include "DumpHelper.hpp"
 #include "ConfigHelper.hpp"
 #include "ImageReceiver.hpp"
@@ -412,14 +411,62 @@ void ImageReceiver::processFrameSet(std::shared_ptr<ob::FrameSet> frameset) {
         processFrameSetParallel(frameset);
     } else {
         // Use serial processing
+        processFrameSetSerial(frameset);
+    }
+}
+
+void ImageReceiver::processFrameSetSerial(std::shared_ptr<ob::FrameSet> frameset) {
+    if(!frameset) return;
+    
+    // Get the number of frames in the frame set
+    uint32_t frameCount = frameset->frameCount();
+
+    // Log frame set information
+    LOG_DEBUG("Received frame set (serial), frame count: ", frameCount, ", timestamp: ", frameset->timeStamp());
+    
+    // Process frames serially
     std::unique_lock<std::mutex> lk(frameMutex_);
-    for(uint32_t i = 0; i < frameset->frameCount(); ++i) {
+    for(uint32_t i = 0; i < frameCount; ++i) {
         auto frame = frameset->getFrame(i);
-            if(frame) {
-        frameMap_[frame->type()] = frame;
-        processFrame(frame);
-            }
+        
+        if(!frame) {
+            LOG_WARN("Received empty frame, index: ", i);
+            continue;
         }
+        
+        // Record frame type and save frame reference to frame map
+        OBFrameType frameType = frame->type();
+        frameMap_[frameType] = frame;
+        
+        // Record processing start time for performance stats
+        auto start = std::chrono::steady_clock::now();
+        
+        // Process the frame
+        processFrame(frame);
+        
+        // Calculate processing time
+        auto end = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+        // Update performance statistics
+        performanceStats_.currentProcessingTime = duration;
+        performanceStats_.totalProcessingTime += duration;
+        performanceStats_.processedFramesCount++;
+        
+        // Update min and max processing times
+        if (duration < performanceStats_.minProcessingTime) {
+            performanceStats_.minProcessingTime = duration;
+        }
+        if (duration > performanceStats_.maxProcessingTime) {
+            performanceStats_.maxProcessingTime = duration;
+        }
+
+        // Log frame processing info
+        std::string frameTypeStr = ob::TypeHelper::convertOBFrameTypeToString(frameType);
+        LOG_DEBUG("Frame processed (serial), type: ", frameTypeStr, " (", static_cast<int>(frameType), ")", 
+                  ", index: ", frame->index(), 
+                  ", timestamp: ", frame->timeStamp(),
+                  ", duration: ", duration, " ms");
     }
 }
 
@@ -433,7 +480,7 @@ void ImageReceiver::processFrameSetParallel(std::shared_ptr<ob::FrameSet> frames
     uint32_t frameCount = frameset->frameCount();
 
     // Log frame set information
-    LOG_DEBUG("Received frame set, frame count: ", frameCount, ", timestamp: ", frameset->timeStamp());
+    LOG_DEBUG("Received frame set (parallel), frame count: ", frameCount, ", timestamp: ", frameset->timeStamp());
     
     // Get all frames and process in parallel
     for(uint32_t i = 0; i < frameCount; ++i) {
@@ -483,7 +530,7 @@ void ImageReceiver::processFrameSetParallel(std::shared_ptr<ob::FrameSet> frames
                     // 帧类型文本描述
                     std::string frameTypeStr = ob::TypeHelper::convertOBFrameTypeToString(frame->type());
 
-                    LOG_DEBUG("Frame processed, type: ", frameTypeStr, " (", static_cast<int>(frame->type()), ")", 
+                    LOG_DEBUG("Frame processed (parallel), type: ", frameTypeStr, " (", static_cast<int>(frame->type()), ")", 
                               ", index: ", frame->index(), 
                               ", timestamp: ", frame->timeStamp(),
                               ", duration: ", duration, " ms");
@@ -540,33 +587,15 @@ void ImageReceiver::cleanupCompletedTasks() {
 void ImageReceiver::processFrame(std::shared_ptr<ob::Frame> frame) {
     if(!frame) return;
 
-    auto& config = ConfigHelper::getInstance();
-    auto& metadataHelper = MetadataHelper::getInstance();
-    auto& frameHelper = DumpHelper::getInstance();
+    auto& dumpHelper = DumpHelper::getInstance();
 
-    // Process metadata
-    if(config.metadataConfig.enableMetadata && 
-       frame->index() % config.metadataConfig.printInterval == 0) {
-        metadataHelper.printMetadata(frame, config.metadataConfig.printInterval);
-    }
-
-    // Process frame saving - based on configured frame interval
-    if(config.saveConfig.enableDump) {
-        // Use simplified frame interval control logic
-        if(frame->index() % config.saveConfig.frameInterval == 0) {
-            // 帧类型文本描述
-            std::string frameTypeStr = ob::TypeHelper::convertOBFrameTypeToString(frame->type());
-            
-            LOG_DEBUG("Saving frame, type: ", frameTypeStr, " (", static_cast<int>(frame->type()), ")", 
-                      ", index: ", frame->index());
-            frameHelper.save(frame, config.saveConfig.dumpPath);
-        }
-    }
+    // 统一的帧处理 - 由DumpHelper根据配置自动处理所有相关操作
+    dumpHelper.processFrame(frame);
     
     // 调用帧处理回调（通知 PerceptionSystem）
     if (frameProcessCallback_) {
         try {
-            frameProcessCallback_(frame, frame->type());
+            frameProcessCallback_(frame, frame->getType());
         } catch (const std::exception& e) {
             LOG_ERROR("Frame process callback failed: ", e.what());
         }

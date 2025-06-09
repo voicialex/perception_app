@@ -232,8 +232,11 @@ void ConfigParser::parseSaveConfig(const Json::Value& json, ConfigHelper::SaveCo
     config.saveColor = safeGetValue(json, "saveColor", config.saveColor);
     config.saveDepth = safeGetValue(json, "saveDepth", config.saveDepth);
     config.saveDepthColormap = safeGetValue(json, "saveDepthColormap", config.saveDepthColormap);
+    config.saveDepthData = safeGetValue(json, "saveDepthData", config.saveDepthData);
     config.saveIR = safeGetValue(json, "saveIR", config.saveIR);
     config.savePointCloud = safeGetValue(json, "savePointCloud", config.savePointCloud);
+    config.saveMetadata = safeGetValue(json, "saveMetadata", config.saveMetadata);
+    config.enableMetadataConsole = safeGetValue(json, "enableMetadataConsole", config.enableMetadataConsole);
     config.imageFormat = safeGetValue(json, "imageFormat", config.imageFormat);
     config.maxFramesToSave = safeGetValue(json, "maxFramesToSave", config.maxFramesToSave);
     config.frameInterval = safeGetValue(json, "frameInterval", config.frameInterval);
@@ -241,13 +244,9 @@ void ConfigParser::parseSaveConfig(const Json::Value& json, ConfigHelper::SaveCo
 }
 
 void ConfigParser::parseMetadataConfig(const Json::Value& json, ConfigHelper::MetadataConfig& config) {
-    config.enableMetadata = safeGetValue(json, "enableMetadata", config.enableMetadata);
-    config.printInterval = safeGetValue(json, "printInterval", config.printInterval);
     config.showTimestamp = safeGetValue(json, "showTimestamp", config.showTimestamp);
     config.showFrameNumber = safeGetValue(json, "showFrameNumber", config.showFrameNumber);
     config.showDeviceInfo = safeGetValue(json, "showDeviceInfo", config.showDeviceInfo);
-    config.enableTimingInfo = safeGetValue(json, "enableTimingInfo", config.enableTimingInfo);
-    config.statsInterval = safeGetValue(json, "statsInterval", config.statsInterval);
 }
 
 void ConfigParser::parseHotPlugConfig(const Json::Value& json, ConfigHelper::HotPlugConfig& config) {
@@ -347,8 +346,11 @@ Json::Value ConfigParser::saveConfigToJson(const ConfigHelper::SaveConfig& confi
     json["saveColor"] = config.saveColor;
     json["saveDepth"] = config.saveDepth;
     json["saveDepthColormap"] = config.saveDepthColormap;
+    json["saveDepthData"] = config.saveDepthData;
     json["saveIR"] = config.saveIR;
     json["savePointCloud"] = config.savePointCloud;
+    json["saveMetadata"] = config.saveMetadata;
+    json["enableMetadataConsole"] = config.enableMetadataConsole;
     json["imageFormat"] = config.imageFormat;
     json["maxFramesToSave"] = config.maxFramesToSave;
     json["frameInterval"] = config.frameInterval;
@@ -358,13 +360,9 @@ Json::Value ConfigParser::saveConfigToJson(const ConfigHelper::SaveConfig& confi
 
 Json::Value ConfigParser::metadataConfigToJson(const ConfigHelper::MetadataConfig& config) {
     Json::Value json;
-    json["enableMetadata"] = config.enableMetadata;
-    json["printInterval"] = config.printInterval;
     json["showTimestamp"] = config.showTimestamp;
     json["showFrameNumber"] = config.showFrameNumber;
     json["showDeviceInfo"] = config.showDeviceInfo;
-    json["enableTimingInfo"] = config.enableTimingInfo;
-    json["statsInterval"] = config.statsInterval;
     return json;
 }
 

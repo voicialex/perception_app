@@ -63,23 +63,21 @@ public:
         bool saveDepthData = true;           // 保存深度数据的纯数字格式(CSV)
         bool saveIR = true;                  // 保存红外图像
         bool savePointCloud = false;         // 保存点云数据
+        bool saveMetadata = true;            // 保存元数据为txt文件
+        bool enableMetadataConsole = false;  // 启用元数据控制台显示
         std::string imageFormat = "png";     // 图像格式
         int maxFramesToSave = 1000;          // 最大保存帧数
-        int frameInterval = 500;             // 保存帧间隔（每N帧保存一帧，值越大保存频率越低）
+        int frameInterval = 200;             // 统一帧间隔（保存、元数据文件、元数据控制台显示）
         bool enableFrameStats = false;       // 启用帧统计信息
         
         bool validate() const;
     } saveConfig;
 
-    // 元数据显示配置
+    // 元数据显示格式配置（显示间隔由SaveConfig.frameInterval统一控制）
     struct MetadataConfig {
-        bool enableMetadata = false;         // 启用元数据显示（默认关闭减少输出）
-        int printInterval = 300;             // 打印间隔(帧数)
         bool showTimestamp = true;           // 显示时间戳
         bool showFrameNumber = true;         // 显示帧号
         bool showDeviceInfo = true;          // 显示设备信息
-        bool enableTimingInfo = false;       // 启用详细时序信息
-        int statsInterval = 30;              // 统计信息输出间隔(秒)
         
         bool validate() const;
     } metadataConfig;

@@ -81,14 +81,14 @@ int main() {
         config.streamConfig.enableColor = true;
         config.streamConfig.enableDepth = true;
         config.streamConfig.enableIR = true;
-        config.metadataConfig.enableMetadata = false;
-        config.renderConfig.enableRendering = false;  // 无头模式
+        config.renderConfig.enableRendering = true;  // 无头模式
         config.renderConfig.showFPS = true;
         config.hotPlugConfig.enableHotPlug = true;
         config.hotPlugConfig.waitForDeviceOnStartup = true;
         config.hotPlugConfig.printDeviceEvents = true;
         config.inferenceConfig.enablePerformanceStats = true;
         config.saveConfig.enableFrameStats = true;
+        config.saveConfig.enableMetadataConsole = false;  // 禁用元数据控制台显示
         
         // 配置数据保存
         config.saveConfig.enableDump = true;
