@@ -5,6 +5,7 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
+#include <unistd.h>
 
 #include "core/ImageReceiver.hpp"
 #include "config/ConfigHelper.hpp"
@@ -15,21 +16,37 @@ std::atomic<bool> g_exitRequested{false};
 std::unique_ptr<ImageReceiver> g_imageReceiver;
 
 /**
- * @brief 信号处理函数 - 只使用异步信号安全的操作
+ * @brief SIGALRM 信号处理函数 - 强制退出
+ */
+void alarmHandler(int signal) {
+    (void)signal;
+    std::_Exit(1);  // 立即强制退出
+}
+
+/**
+ * @brief 主信号处理函数 - 设置超时后优雅退出
  */
 void signalHandler(int signal) {
+    static std::atomic<bool> firstSignal{true};
+    
     // 避免未使用参数警告
     (void)signal;
     
-    // 只使用异步信号安全的操作
-    g_exitRequested = true;
-    
-    if (g_imageReceiver) {
-        g_imageReceiver->stop();
+    if (firstSignal.exchange(false)) {
+        // 第一次收到信号，设置优雅退出
+        g_exitRequested = true;
+        
+        if (g_imageReceiver) {
+            g_imageReceiver->stop();
+        }
+        
+        // 设置 5 秒超时，如果无法正常退出则强制退出
+        std::signal(SIGALRM, alarmHandler);
+        alarm(5);  // 5 秒后发送 SIGALRM 信号强制退出
+    } else {
+        // 再次收到信号，立即强制退出
+        std::_Exit(1);
     }
-    
-    // 不在信号处理函数中使用日志或创建线程
-    // 让主线程处理退出逻辑
 }
 
 int main() {
@@ -64,7 +81,7 @@ int main() {
         config.streamConfig.enableColor = true;
         config.streamConfig.enableDepth = true;
         config.streamConfig.enableIR = true;
-        config.metadataConfig.enableMetadata = true;
+        config.metadataConfig.enableMetadata = false;
         config.renderConfig.enableRendering = false;  // 无头模式
         config.renderConfig.showFPS = true;
         config.hotPlugConfig.enableHotPlug = true;
@@ -114,6 +131,7 @@ int main() {
         
         // 主循环
         LOG_INFO("Starting main loop...");
+        LOG_INFO("Press Ctrl+C to exit (program will force quit after 5 seconds if needed)");
         
         // 在单独的线程中运行图像接收器
         std::thread receiverThread([&]() {
@@ -136,6 +154,9 @@ int main() {
         if (receiverThread.joinable()) {
             receiverThread.join();
         }
+        
+        // 取消闹钟（如果程序正常退出）
+        alarm(0);
         
         LOG_INFO("Program exited normally");
         

@@ -559,7 +559,7 @@ void ImageReceiver::processFrame(std::shared_ptr<ob::Frame> frame) {
             
             LOG_DEBUG("Saving frame, type: ", frameTypeStr, " (", static_cast<int>(frame->type()), ")", 
                       ", index: ", frame->index());
-            frameHelper.saveFrame(frame, config.saveConfig.dumpPath);
+            frameHelper.save(frame, config.saveConfig.dumpPath);
         }
     }
     
@@ -586,7 +586,7 @@ void ImageReceiver::run() {
         
         // 如果启用渲染，初始化时先显示无信号画面
         if(config.renderConfig.enableRendering && window_) {
-        showNoSignalFrame();
+            showNoSignalFrame();
         }
         
         // 主循环

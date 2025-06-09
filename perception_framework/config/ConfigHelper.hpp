@@ -65,7 +65,7 @@ public:
         bool savePointCloud = false;         // 保存点云数据
         std::string imageFormat = "png";     // 图像格式
         int maxFramesToSave = 1000;          // 最大保存帧数
-        int frameInterval = 100;             // 保存帧间隔（每N帧保存一帧，值越大保存频率越低）
+        int frameInterval = 500;             // 保存帧间隔（每N帧保存一帧，值越大保存频率越低）
         bool enableFrameStats = false;       // 启用帧统计信息
         
         bool validate() const;
