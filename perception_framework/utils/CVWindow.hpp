@@ -10,8 +10,9 @@
 #include <condition_variable>
 #include <cmath>
 #include <map>
+#include <atomic>
+#include <chrono>
 
-#include "utils_types.h"
 #include "utils.hpp"
 
 namespace ob_smpl {
@@ -31,8 +32,15 @@ public:
     CVWindow(std::string name, uint32_t width = 1280, uint32_t height = 720, ArrangeMode arrangeMode = ARRANGE_SINGLE);
     ~CVWindow() noexcept;
 
-    // run the window loop
-    bool run();
+    // 分离窗口显示逻辑和处理逻辑
+    // 处理窗口消息和键盘输入，但不显示图像，返回窗口是否应该继续运行
+    bool processEvents();
+
+    // 显示当前渲染图像 - 必须在主线程中调用
+    void updateWindow();
+
+    // 获取当前渲染图像的副本
+    cv::Mat getRenderMat();
 
     // close window
     void close();
@@ -68,6 +76,12 @@ public:
     // destroyWindow
     void destroyWindow();
 
+    // 无信号画面管理方法
+    void showNoSignalFrame();
+    void hideNoSignalFrame();
+    bool isShowingNoSignalFrame() const;
+    void updateNoSignalFrame(); // 更新无信号画面（如时间戳）
+
 private:
     // frames processing thread function
     void processFrames();
@@ -82,6 +96,12 @@ private:
     void drawInfo(cv::Mat &imageMat, std::shared_ptr<const ob::VideoFrame> &frame);
 
     cv::Mat resizeMatKeepAspectRatio(const cv::Mat &mat, int width, int height);
+
+    // 无信号画面相关方法
+    void createNoSignalFrame();
+    
+    // 更新无信号画面时间戳（内部方法）
+    void checkAndUpdateNoSignalFrame();
 
 private:
     std::string name_;
@@ -112,6 +132,12 @@ private:
     uint64      logCreatedTime_;
 
     std::function<void(int)> keyPressedCallback_;
+
+    // 无信号画面相关成员变量
+    std::atomic<bool> showingNoSignalFrame_;
+    cv::Mat noSignalMat_;
+    std::chrono::steady_clock::time_point lastNoSignalUpdateTime_;
+    std::mutex noSignalMutex_;
 };
 
 }  // namespace ob_smpl

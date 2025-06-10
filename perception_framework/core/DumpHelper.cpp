@@ -937,21 +937,16 @@ void DumpHelper::saveMetadata(std::shared_ptr<ob::Frame> frame, const std::strin
     if (!frame || !metadataHelper_) return;
     
     try {
-        std::cout << "1\n";
         SaveInfo info(path, frame);
         if (!info.valid()) {
             return;
         }
         
-        std::cout << "2\n";
         // 使用 MetadataHelper 组件提取元数据内容
         std::string metadataContent = metadataHelper_->extractMetadataToString(frame);
         
-        std::cout << "3\n";
         // 保存到文件
-        std::cout << "4\n";
         saveText(metadataContent, info, "metadata", ".txt");
-        std::cout << "5\n";
         
     } catch (const std::exception& e) {
         LOG_ERROR("Error saving metadata: ", e.what());

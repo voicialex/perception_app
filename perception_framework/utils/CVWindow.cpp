@@ -1,9 +1,11 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#include "utils_opencv.hpp"
+#include "CVWindow.hpp"
 #include "utils.hpp"
-#include "utils_types.h"
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
 #if defined(__has_include)
 #if __has_include(<opencv2/core/utils/logger.hpp>)
@@ -25,7 +27,9 @@ CVWindow::CVWindow(std::string name, uint32_t width, uint32_t height, ArrangeMod
       showSyncTimeInfo_(false),
       isWindowDestroyed_(false),
       alpha_(0.6f),
-      showPrompt_(false) {
+      showPrompt_(false),
+      showingNoSignalFrame_(false),
+      lastNoSignalUpdateTime_(std::chrono::steady_clock::now()) {
 
 #if defined(TO_DISABLE_OPENCV_LOG)
     cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_SILENT);
@@ -36,9 +40,9 @@ CVWindow::CVWindow(std::string name, uint32_t width, uint32_t height, ArrangeMod
     cv::namedWindow(name_, cv::WINDOW_NORMAL);
     cv::resizeWindow(name_, width_, height_);
 
-    renderMat_ = cv::Mat::zeros(height_, width_, CV_8UC3);
-    cv::putText(renderMat_, "Waiting for streams...", cv::Point(8, 16), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
-    cv::imshow(name_, renderMat_);
+    // 创建初始的无信号画面
+    createNoSignalFrame();
+    renderMat_ = noSignalMat_.clone();
 
     // start processing thread
     processThread_ = std::thread(&CVWindow::processFrames, this);
@@ -55,15 +59,12 @@ void CVWindow::setKeyPressedCallback(std::function<void(int)> callback) {
     keyPressedCallback_ = callback;
 }
 
-// if window is closed
-bool CVWindow::run() {
-
-    {
-        // show render mat
-        std::lock_guard<std::mutex> lock(renderMatsMtx_);
-        cv::imshow(name_, renderMat_);
-    }
-
+// 处理窗口事件，但不显示图像
+bool CVWindow::processEvents() {
+    // 自动更新无信号画面的时间戳（如果正在显示无信号画面）
+    checkAndUpdateNoSignalFrame();
+    
+    // 只处理键盘事件，不显示图像
     int key = cv::waitKey(1);
     if(key != -1) {
         if(key == ESC_KEY) {
@@ -112,6 +113,39 @@ bool CVWindow::run() {
         }
     }
     return !closed_;
+}
+
+// 显示当前渲染图像 - 必须在主线程中调用
+void CVWindow::updateWindow() {
+    if(closed_ || isWindowDestroyed_) {
+        return;
+    }
+    
+    // 显示当前渲染图像
+    std::lock_guard<std::mutex> lock(renderMatsMtx_);
+    cv::imshow(name_, renderMat_);
+}
+
+// 获取当前渲染图像的副本
+cv::Mat CVWindow::getRenderMat() {
+    std::lock_guard<std::mutex> lock(renderMatsMtx_);
+    return renderMat_.clone();
+}
+
+// 检查并更新无信号画面时间戳
+void CVWindow::checkAndUpdateNoSignalFrame() {
+    if (showingNoSignalFrame_.load()) {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastNoSignalUpdateTime_).count();
+        
+        if (elapsed >= 1) {
+            createNoSignalFrame();
+            std::lock_guard<std::mutex> lock(renderMatsMtx_);
+            if (!noSignalMat_.empty()) {
+                renderMat_ = noSignalMat_.clone();
+            }
+        }
+    }
 }
 
 // close window
@@ -579,6 +613,77 @@ cv::Mat CVWindow::resizeMatKeepAspectRatio(const cv::Mat &mat, int width, int he
         cv::copyMakeBorder(resizeMat, paddedMat, paddingTop, paddingBottom, 0, 0, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
     }
     return paddedMat;
+}
+
+// 无信号画面管理方法实现
+void CVWindow::createNoSignalFrame() {
+    std::lock_guard<std::mutex> lock(noSignalMutex_);
+    
+    // 创建黑色背景
+    cv::Mat noSignalMat(height_, width_, CV_8UC3, cv::Scalar(0, 0, 0)); // 黑色背景 (BGR格式)
+    
+    // 添加"无信号"文字
+    std::string text = "Waiting for signal...";
+    int fontFace = cv::FONT_HERSHEY_SIMPLEX;
+    double fontScale = 1.0;
+    int thickness = 2;
+    int baseline = 0;
+    
+    // 计算文字大小以便居中显示
+    cv::Size textSize = cv::getTextSize(text, fontFace, fontScale, thickness, &baseline);
+    cv::Point textOrg((width_ - textSize.width) / 2, (height_ + textSize.height) / 2);
+    
+    // 绘制文字
+    cv::putText(noSignalMat, text, textOrg, fontFace, fontScale, cv::Scalar(255, 255, 255), thickness);
+    
+    // 添加时间戳
+    auto now = std::chrono::system_clock::now();
+    auto now_time = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&now_time), "%Y-%m-%d %H:%M:%S");
+    std::string timeStr = ss.str();
+    
+    cv::putText(noSignalMat, timeStr, cv::Point(10, height_ - 10), fontFace, 0.5, cv::Scalar(255, 255, 255), 1);
+    
+    // 保存无信号画面
+    noSignalMat_ = noSignalMat.clone();
+    lastNoSignalUpdateTime_ = std::chrono::steady_clock::now();
+}
+
+void CVWindow::showNoSignalFrame() {
+    if (closed_ || isWindowDestroyed_) {
+        return;
+    }
+    
+    // 如果还没有无信号画面，先创建一个
+    if (noSignalMat_.empty()) {
+        createNoSignalFrame();
+    }
+    
+    showingNoSignalFrame_ = true;
+    
+    std::lock_guard<std::mutex> lock(renderMatsMtx_);
+    if (!noSignalMat_.empty()) {
+        renderMat_ = noSignalMat_.clone();
+    }
+}
+
+void CVWindow::hideNoSignalFrame() {
+    showingNoSignalFrame_ = false;
+}
+
+bool CVWindow::isShowingNoSignalFrame() const {
+    return showingNoSignalFrame_.load();
+}
+
+void CVWindow::updateNoSignalFrame() {
+    if (showingNoSignalFrame_.load()) {
+        createNoSignalFrame();
+        std::lock_guard<std::mutex> lock(renderMatsMtx_);
+        if (!noSignalMat_.empty()) {
+            renderMat_ = noSignalMat_.clone();
+        }
+    }
 }
 
 }  // namespace ob_smpl

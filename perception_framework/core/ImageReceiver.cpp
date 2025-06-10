@@ -10,14 +10,14 @@
 #include "libobsensor/ObSensor.hpp"
 #include "libobsensor/hpp/Error.hpp"
 #include "utils.hpp"
-#include "utils_opencv.hpp"
+#include "CVWindow.hpp"
 #include "DumpHelper.hpp"
 #include "ConfigHelper.hpp"
 #include "ImageReceiver.hpp"
 #include "DeviceManager.hpp"
 #include <opencv2/opencv.hpp>
 
-ImageReceiver::ImageReceiver() : lastFrameTime_(std::chrono::steady_clock::now()) {
+ImageReceiver::ImageReceiver() {
     LOG_DEBUG("ImageReceiver created");
 }
 
@@ -85,14 +85,6 @@ bool ImageReceiver::initialize() {
             LOG_INFO("Rendering disabled, running in headless mode");
         }
         
-        // 创建无信号画面（即使在无头模式下也可能需要）
-        createNoSignalFrame();
-        
-        // 如果有窗口，立即显示背景
-        if(window_) {
-        showNoSignalFrame();
-        }
-        
         // 启动设备管理器
         deviceManager_->start();
         
@@ -115,86 +107,6 @@ bool ImageReceiver::initialize() {
         LOG_ERROR("Failed to initialize ImageReceiver: ", e.what());
         return false;
     }
-}
-
-// 创建无信号画面
-void ImageReceiver::createNoSignalFrame() {
-    auto& config = ConfigHelper::getInstance();
-    int width = config.renderConfig.windowWidth;
-    int height = config.renderConfig.windowHeight;
-
-    // 创建黑色背景
-    cv::Mat noSignalMat(height, width, CV_8UC3, cv::Scalar(0, 0, 0)); // 黑色背景 (BGR格式)
-    
-    // 添加"无信号"文字
-    std::string text = "Waiting for signal...";
-    int fontFace = cv::FONT_HERSHEY_SIMPLEX;
-    double fontScale = 1.0;
-    int thickness = 2;
-    int baseline = 0;
-    
-    // 计算文字大小以便居中显示
-    cv::Size textSize = cv::getTextSize(text, fontFace, fontScale, thickness, &baseline);
-    cv::Point textOrg((width - textSize.width) / 2, (height + textSize.height) / 2);
-    
-    // 绘制文字
-    cv::putText(noSignalMat, text, textOrg, fontFace, fontScale, cv::Scalar(255, 255, 255), thickness);
-    
-    // 添加时间戳
-    auto now = std::chrono::system_clock::now();
-    auto now_time = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&now_time), "%Y-%m-%d %H:%M:%S");
-    std::string timeStr = ss.str();
-    
-    cv::putText(noSignalMat, timeStr, cv::Point(10, height - 10), fontFace, 0.5, cv::Scalar(255, 255, 255), 1);
-    
-    // 直接将Mat保存为成员变量
-    noSignalMat_ = noSignalMat.clone();
-    
-    LOG_DEBUG("No signal frame created with black background");
-}
-
-void ImageReceiver::showNoSignalFrame() {
-    if(!ConfigHelper::getInstance().renderConfig.enableRendering) {
-        // 在无头模式下，只更新内部状态，不进行实际渲染
-        showingNoSignalFrame_ = true;
-        return;
-    }
-    
-    if(!window_) {
-        LOG_DEBUG("No window available for rendering no signal frame");
-        return;
-    }
-    
-    // 检查是否需要更新无信号画面（例如更新时间戳）
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastFrameTime_).count();
-    
-    // 每秒更新一次无信号画面
-    if(elapsed >= 1) {
-        createNoSignalFrame();
-        lastFrameTime_ = now;
-    }
-    
-    // 显示无信号画面
-    if(!noSignalMat_.empty()) {
-        // 将无信号画面显示在窗口中
-        // 创建一个临时的帧向量
-        std::vector<std::shared_ptr<const ob::Frame>> emptyFrames;
-        window_->pushFramesToView(emptyFrames);
-        
-        // 使用正确的窗口名称，与视频流使用相同窗口
-        auto& config = ConfigHelper::getInstance();
-        cv::imshow(config.renderConfig.windowTitle, noSignalMat_);
-        cv::waitKey(1);
-    }
-    
-    showingNoSignalFrame_ = true;
-}
-
-bool ImageReceiver::isNoSignalFrameShowing() const {
-    return showingNoSignalFrame_.load();
 }
 
 void ImageReceiver::setupKeyboardCallbacks() {
@@ -259,7 +171,6 @@ void ImageReceiver::onDeviceStateChanged(DeviceManager::DeviceState oldState,
             
             if(setupPipelines() && startPipelines()) {
                 LOG_INFO("Pipelines started successfully, device ready for streaming");
-                showingNoSignalFrame_ = false;
                 noFrameCounter_ = 0;
             } else {
                 LOG_ERROR("Failed to start pipelines after device connection");
@@ -269,19 +180,16 @@ void ImageReceiver::onDeviceStateChanged(DeviceManager::DeviceState oldState,
         case DeviceManager::DeviceState::DISCONNECTED:
             LOG_INFO("Device disconnected, stopping pipelines...");
             stopPipelines();
-            showingNoSignalFrame_ = false;
             break;
             
         case DeviceManager::DeviceState::RECONNECTING:
             LOG_INFO("Device reconnecting, stopping pipelines...");
             stopPipelines();
-            showingNoSignalFrame_ = false;
             break;
             
         case DeviceManager::DeviceState::ERROR:
             LOG_ERROR("Device error occurred, stopping pipelines");
             stopPipelines();
-            showingNoSignalFrame_ = false;
             break;
             
         default:
@@ -611,24 +519,9 @@ void ImageReceiver::run() {
     try {
         LOG_INFO("Starting ImageReceiver main loop...");
         
-        auto& config = ConfigHelper::getInstance();
-        
-        // 如果启用渲染，初始化时先显示无信号画面
-        if(config.renderConfig.enableRendering && window_) {
-            showNoSignalFrame();
-        }
-        
-        // 主循环
+        // 主循环 - 不再包含窗口显示逻辑
         while(!shouldExit_) {
-            // 只在有窗口时检查窗口状态
-            if(config.renderConfig.enableRendering && window_) {
-            if(!window_->run()) {
-                LOG_INFO("Window closed, exiting...");
-                break;
-                }
-            }
-            
-            renderFrames();
+            renderFrames(); // 只处理帧数据，不进行显示
             updatePerformanceStats();
             
             // 控制循环频率
@@ -645,7 +538,17 @@ void ImageReceiver::run() {
     catch(const std::exception &e) {
         LOG_ERROR("Runtime error: ", e.what());
         cleanup();
-                }
+    }
+}
+
+// 处理窗口事件，但不进行显示（显示由主线程负责）
+bool ImageReceiver::processWindowEvents() {
+    if (!window_ || !ConfigHelper::getInstance().renderConfig.enableRendering) {
+        return true; // 无窗口或禁用渲染时，返回true表示继续运行
+    }
+    
+    // 只处理窗口事件，不显示图像
+    return window_->processEvents();
 }
 
 void ImageReceiver::renderFrames() {
@@ -681,9 +584,8 @@ void ImageReceiver::renderFrames() {
         if(!framesForRender.empty()) {
             // 有帧数据，正常显示
             window_->pushFramesToView(framesForRender);
-            showingNoSignalFrame_ = false;
+            window_->hideNoSignalFrame();
             noFrameCounter_ = 0;
-            lastFrameTime_ = std::chrono::steady_clock::now();
         } else {
             // 设备已连接但没有帧数据
             noFrameCounter_++;
@@ -691,7 +593,7 @@ void ImageReceiver::renderFrames() {
             // 如果超过一定时间没有帧数据，显示无信号画面
             // 这里设置为30帧（约3秒）后显示无信号画面
             if(noFrameCounter_ > 30) {
-                showNoSignalFrame();
+                window_->showNoSignalFrame();
             }
             
             if(noFrameCounter_ % 100 == 0) {  // 每100次循环打印一次
@@ -702,7 +604,7 @@ void ImageReceiver::renderFrames() {
         static int waitCount = 0;
         if(++waitCount % 100 == 0) {  // 每100次循环打印一次
             // 设备未连接，显示无信号画面
-            showNoSignalFrame();
+            window_->showNoSignalFrame();
             LOG_DEBUG("Waiting for device connection... (state: ", static_cast<int>(deviceState), ")");
         }
     }
@@ -835,9 +737,6 @@ void ImageReceiver::cleanup() {
         
         // 清理线程池
         threadPool_.reset();
-        
-        // 清理无信号帧
-        noSignalMat_.release();
         
         // 停止设备管理器
         if(deviceManager_) {

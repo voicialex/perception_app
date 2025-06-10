@@ -19,7 +19,7 @@
 #include "Logger.hpp"
 #include "ConfigHelper.hpp"
 #include "utils.hpp"
-#include "utils_opencv.hpp"
+#include "CVWindow.hpp"
 #include "DumpHelper.hpp"
 #include "MetadataHelper.hpp"
 #include "DeviceManager.hpp"
@@ -87,17 +87,6 @@ public:
     void printConnectedDevices();
     
     /**
-     * @brief 显示无信号画面
-     */
-    void showNoSignalFrame();
-    
-    /**
-     * @brief 检查是否正在显示无信号画面
-     * @return 是否正在显示无信号画面
-     */
-    bool isNoSignalFrameShowing() const;
-    
-    /**
      * @brief 获取设备状态
      * @return 当前设备状态
      */
@@ -127,6 +116,18 @@ public:
         }
         return false;
     }
+    
+    /**
+     * @brief 获取CVWindow实例（如果有）
+     * @return CVWindow实例
+     */
+    std::shared_ptr<ob_smpl::CVWindow> getWindow() const { return window_; }
+    
+    /**
+     * @brief 处理窗口事件（返回窗口是否应该继续运行）
+     * @return 是否应该继续运行
+     */
+    bool processWindowEvents();
     
     /**
      * @brief 设置帧处理回调（由 PerceptionSystem 调用）
@@ -169,9 +170,6 @@ private:
     void printPerformanceStats();
     void resetPerformanceStats();
     
-    // 无信号画面
-    void createNoSignalFrame();
-
     // 并行处理
     void processFrameSetParallel(std::shared_ptr<ob::FrameSet> frameset);
     
@@ -192,7 +190,7 @@ private:
     std::shared_ptr<ob::Config> imuConfig_;
 
     // 渲染窗口
-    std::unique_ptr<ob_smpl::CVWindow> window_;
+    std::shared_ptr<ob_smpl::CVWindow> window_;
 
     // 线程同步
     std::mutex frameMutex_;
@@ -227,17 +225,12 @@ private:
         double avgProcessingTime{0.0};                 // 平均处理时间(毫秒)
     } performanceStats_;
 
-    // 热插拔状态
+    // 热插拔相关
     std::atomic<int> reconnectAttempts_{0};
     std::chrono::steady_clock::time_point lastDisconnectTime_;
-    
-    // 无信号画面
-    cv::Mat noSignalMat_;
-    std::atomic<bool> showingNoSignalFrame_{false};
-    std::chrono::steady_clock::time_point lastFrameTime_;
-    std::atomic<int> noFrameCounter_{0};
+    std::atomic<int> noFrameCounter_{0};  // 无帧计数器
 
-    // 线程池
+    // 并行处理配置和状态
     std::unique_ptr<utils::ThreadPool> threadPool_;
     
     // 并行处理配置

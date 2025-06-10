@@ -147,10 +147,17 @@ public:
         Logger::Level logLevel = Logger::Level::INFO;   // 日志级别
         bool enableConsole = true;                      // 是否启用控制台输出
         bool enableFileLogging = true;                  // 是否启用文件日志
-        std::string logDirectory = "logs/";             // 日志目录
+        std::string logDirectory = "./logs/";             // 日志目录
         
         bool validate() const;
     } loggerConfig;
+
+    // 通信配置
+    struct CommunicationConfig {
+        bool enableCommunication = true;             // 是否启用通信
+        std::string commPath = "/tmp/perception_";   // 通信管道基础路径
+        int heartbeatInterval = 1000;                // 心跳间隔(毫秒)
+    } communicationConfig;
 
     /**
      * @brief 初始化日志系统

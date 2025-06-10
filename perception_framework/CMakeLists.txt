@@ -65,30 +65,7 @@ target_link_libraries(perception_app PRIVATE
 # 安装
 install(TARGETS perception_app RUNTIME DESTINATION bin)
 
-#----------------------------------------------------------------------
-# state_tester应用
-#----------------------------------------------------------------------
-add_executable(state_tester StateControlTester.cpp)
-
-# 链接库
-target_link_libraries(state_tester PRIVATE
-    perception::config
-    perception::com
-    perception::utils
-    ob::OrbbecSDK
-)
-
-# 安装
-install(TARGETS state_tester RUNTIME DESTINATION bin)
-
 # 添加测试目标
-add_custom_target(run_state_test
-    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/state_tester
-    DEPENDS state_tester
-    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-    COMMENT "Running state tester..."
-)
-
 add_custom_target(run_perception_app
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/perception_app
     DEPENDS perception_app

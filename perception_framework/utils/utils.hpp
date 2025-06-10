@@ -3,9 +3,9 @@
 
 #pragma once
 #include <stdint.h>
-#include "utils_types.h"
-
 #include <sstream>
+
+#define ESC_KEY 27
 
 namespace ob_smpl {
 char waitForKeyPressed(uint32_t timeout_ms = 0);

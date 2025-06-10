@@ -31,14 +31,21 @@ bool PerceptionSystem::initialize() {
 
     LOG_INFO("Initializing PerceptionSystem...");
     
-    // 初始化通信代理
-    if(!commProxy_.initialize()) {
-        LOG_ERROR("Failed to initialize CommunicationProxy");
-        return false;
-    }
+    auto& config = ConfigHelper::getInstance();
     
-    // 设置通信回调
-    setupCommunicationCallbacks();
+    // 初始化通信代理（如果启用）
+    if (config.communicationConfig.enableCommunication) {
+        LOG_INFO("Initializing communication proxy...");
+        if(!commProxy_.initialize()) {
+            LOG_ERROR("Failed to initialize CommunicationProxy");
+            return false;
+        }
+        
+        // 设置通信回调
+        setupCommunicationCallbacks();
+    } else {
+        LOG_INFO("Communication proxy disabled by configuration");
+    }
     
     // 创建图像接收器
     imageReceiver_ = std::make_unique<ImageReceiver>();
@@ -63,9 +70,6 @@ bool PerceptionSystem::initialize() {
     if (!initializeCalibrationSystem()) {
         LOG_WARN("Failed to initialize calibration system");
     }
-    
-    // 初始化后立即显示黑色无信号画面
-    imageReceiver_->showNoSignalFrame();
     
     // 设置初始状态为待命
     currentState_ = SystemState::PENDING;
@@ -316,22 +320,18 @@ void PerceptionSystem::handleRunningState() {
 void PerceptionSystem::handlePendingState() {
     LOG_INFO("Handling PENDING state event");
     
-    // 停止图像接收器的流处理，但保持窗口显示黑色背景
+    // 停止图像接收器的流处理，保持窗口显示等待状态
     if(imageReceiver_) {
         imageReceiver_->stopStreaming();
-        // 显示无信号画面
-        imageReceiver_->showNoSignalFrame();
     }
 }
 
 void PerceptionSystem::handleErrorState() {
     LOG_ERROR("Handling ERROR state event");
     
-    // 停止图像接收器
+    // 停止图像接收器，窗口将自动显示无信号画面
     if(imageReceiver_) {
         imageReceiver_->stopStreaming();
-        // 显示无信号画面
-        imageReceiver_->showNoSignalFrame();
     }
 }
 
@@ -369,9 +369,9 @@ void PerceptionSystem::handleShutdownState() {
     stop();
 }
 
-void PerceptionSystem::run() {
+void PerceptionSystem::start() {
     if(!isInitialized_) {
-        LOG_ERROR("Cannot run PerceptionSystem: not initialized");
+        LOG_ERROR("Cannot start PerceptionSystem: not initialized");
         return;
     }
 
@@ -380,10 +380,15 @@ void PerceptionSystem::run() {
         return;
     }
 
-    LOG_INFO("Starting and running PerceptionSystem...");
+    LOG_INFO("Starting PerceptionSystem...");
     
-    // 启动通信代理
-    commProxy_.start();
+    // 获取配置
+    auto& config = ConfigHelper::getInstance();
+    
+    // 启动通信代理（如果启用）
+    if (config.communicationConfig.enableCommunication) {
+        commProxy_.start();
+    }
     
     // 设置运行标志
     isRunning_ = true;
@@ -415,30 +420,62 @@ void PerceptionSystem::run() {
     
     // 启动图像接收器的运行循环（非阻塞）
     if(imageReceiver_) {
-        imageReceiver_->run();
+        // 在独立线程中运行图像接收器
+        std::thread receiverThread([this]() {
+            imageReceiver_->run();
+        });
+        receiverThread.detach(); // 分离线程，让它独立运行
     }
     
-    LOG_INFO("PerceptionSystem running with initial state: ", getStateName(currentState_));
-    
-    // 主循环 - 只用于保持程序运行，不再处理状态
-    while(!shouldExit_) {
-        try {
-            // 短暂休眠，减少CPU使用
+    LOG_INFO("PerceptionSystem started with initial state: ", getStateName(currentState_));
+}
+
+void PerceptionSystem::run() {
+    if (!isInitialized_) {
+        LOG_ERROR("Cannot run PerceptionSystem: not initialized");
+        return;
+    }
+
+    if (!isRunning_) {
+        LOG_INFO("PerceptionSystem not running, starting first...");
+        start();
+    }
+
+    LOG_INFO("Entering PerceptionSystem main loop...");
+
+    // 主循环 - 处理窗口事件和显示，直到窗口关闭或系统停止
+    while (isRunning_ && !shouldExit_) {
+        if (!imageReceiver_) {
+            LOG_ERROR("ImageReceiver is not available");
+            break;
+        }
+
+        auto window = imageReceiver_->getWindow();
+        if (!window) {
+            LOG_WARN("No window available, waiting...");
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            
-            // 检查图像接收器窗口是否正常
-            if(imageReceiver_ && currentState_ == SystemState::PENDING) {
-                // 在待命状态下，确保始终显示无信号画面
-                imageReceiver_->showNoSignalFrame();
-            }
+            continue;
         }
-        catch(const std::exception& e) {
-            LOG_ERROR("Exception in main loop: ", e.what());
-            setState(SystemState::ERROR);
+
+        // 处理窗口事件
+        if (!imageReceiver_->processWindowEvents()) {
+            LOG_INFO("Window closed, exiting main loop...");
+            break;
         }
+        
+        // 在主线程中显示窗口内容
+        window->updateWindow();
+        
+        // 短暂延迟，减少CPU占用
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-    
+
     LOG_INFO("PerceptionSystem main loop exited");
+    
+    // 如果是因为窗口关闭而退出循环，则停止系统
+    if (isRunning_) {
+        stop();
+    }
 }
 
 void PerceptionSystem::stop() {
@@ -457,8 +494,10 @@ void PerceptionSystem::stop() {
         imageReceiver_->stopStreaming();
     }
     
-    // 停止通信代理
-    commProxy_.stop();
+    // 停止通信代理（如果启用）
+    if (ConfigHelper::getInstance().communicationConfig.enableCommunication) {
+        commProxy_.stop();
+    }
     
     LOG_INFO("PerceptionSystem stopped");
 }

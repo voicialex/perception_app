@@ -1,6 +1,6 @@
 #include "InferenceManager.hpp"
 #include "ONNXInference.hpp"
-#include "utils_opencv.hpp"
+#include "CVWindow.hpp"
 #include <fstream>
 #include <sstream>
 #include <chrono>

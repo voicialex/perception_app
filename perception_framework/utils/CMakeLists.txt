@@ -8,7 +8,6 @@ project(ob_perception_utils)
 set(HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/utils_c.h
     ${CMAKE_CURRENT_LIST_DIR}/utils.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/utils_types.h
     ${CMAKE_CURRENT_LIST_DIR}/Logger.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ThreadPool.hpp
 )
@@ -25,8 +24,7 @@ target_link_libraries(ob_perception_utils PUBLIC spdlog::spdlog)
 
 if(${OpenCV_FOUND})
     target_sources(ob_perception_utils PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/utils_opencv.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/utils_opencv.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/CVWindow.cpp
     )
     target_link_libraries(ob_perception_utils PUBLIC ${OpenCV_LIBS} ob::OrbbecSDK)
     target_include_directories(ob_perception_utils PUBLIC ${OpenCV_INCLUDE_DIRS})

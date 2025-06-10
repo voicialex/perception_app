@@ -19,10 +19,61 @@ else()
     add_compile_options(-Wall -Wextra)
 endif()
 
-# 设置通用头文件包含路径 - 指向 perception_framework 目录
+# 设置通用头文件包含路径
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../perception_framework
+    ${CMAKE_CURRENT_SOURCE_DIR}/../perception_framework/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../perception_framework/inference
+    ${CMAKE_CURRENT_SOURCE_DIR}/../perception_framework/calibration
+    ${CMAKE_CURRENT_SOURCE_DIR}/../perception_framework/utils
+    ${CMAKE_CURRENT_SOURCE_DIR}/../perception_framework/com
+    ${CMAKE_CURRENT_SOURCE_DIR}/../perception_framework/config
 )
+
+#----------------------------------------------------------------------
+# test_nosignal_optimization - 无信号画面优化测试
+#----------------------------------------------------------------------
+
+if(OpenCV_FOUND)
+    add_executable(test_nosignal_optimization test_nosignal_optimization.cpp)
+
+    # 链接库
+    target_link_libraries(test_nosignal_optimization PRIVATE
+        perception::core
+        perception::config
+        perception::com
+        perception::utils
+        perception::inference
+        perception::calibration
+        ob::OrbbecSDK
+        ${OpenCV_LIBS}
+    )
+
+    # 添加OpenCV包含目录
+    target_include_directories(test_nosignal_optimization PRIVATE ${OpenCV_INCLUDE_DIRS})
+
+    # 安装
+    install(TARGETS test_nosignal_optimization RUNTIME DESTINATION bin)
+endif()
+
+#----------------------------------------------------------------------
+# StateControlTester - 状态控制测试器
+#----------------------------------------------------------------------
+add_executable(state_tester StateControlTester.cpp)
+
+# 链接库
+target_link_libraries(state_tester PRIVATE
+    perception::core
+    perception::config
+    perception::com
+    perception::utils
+    perception::inference
+    perception::calibration
+    ob::OrbbecSDK
+)
+
+# 安装
+install(TARGETS state_tester RUNTIME DESTINATION bin)
 
 #----------------------------------------------------------------------
 # camera_bin 测试应用
@@ -35,6 +86,8 @@ target_link_libraries(camera_bin PRIVATE
     perception::config
     perception::com
     perception::utils
+    perception::inference
+    perception::calibration
     ob::OrbbecSDK
 )
 
@@ -73,14 +126,33 @@ add_executable(config_usage_example config_usage_example.cpp)
 
 # 链接库
 target_link_libraries(config_usage_example PRIVATE
-    perception::config
     perception::core
+    perception::config
+    perception::com
+    perception::utils
+    perception::inference
+    perception::calibration
+    ob::OrbbecSDK
 )
 
 # 安装
 install(TARGETS config_usage_example RUNTIME DESTINATION bin)
 
 # 添加测试目标
+add_custom_target(run_nosignal_test
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_nosignal_optimization
+    DEPENDS test_nosignal_optimization
+    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    COMMENT "Running no signal optimization test..."
+)
+
+add_custom_target(run_state_tester
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/state_tester
+    DEPENDS state_tester
+    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    COMMENT "Running state control tester..."
+)
+
 add_custom_target(run_camera_test
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/camera_bin
     DEPENDS camera_bin
@@ -100,4 +172,10 @@ add_custom_target(run_config_example
     DEPENDS config_usage_example
     WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
     COMMENT "Running config usage example..."
+)
+
+# 添加运行所有测试的目标
+add_custom_target(run_all_tests
+    DEPENDS test_nosignal_optimization state_tester camera_bin inference_demo config_usage_example
+    COMMENT "Building all test programs..."
 ) 
